@@ -13,19 +13,21 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
-    protected $table = 'user';
-    protected $primaryKey = 'user_id';
-
-    public $timestamps = false;
-
     protected $fillable = [
         'role_id',
-        'name',
-        'lastname',
+        'first_name',
+        'last_name',
         'email',
         'password',
-        'active',
+        'is_active',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'is_active' => 'boolean',
+        ];
+    }
 
     protected $hidden = [
         'password',
