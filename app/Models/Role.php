@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Role extends Model
 {
     protected $table = 'roles';
-    protected $primaryKey = 'role_id';
 
     public $timestamps = true;
 
@@ -19,6 +18,6 @@ class Role extends Model
 
     public function users(): HasMany
     {
-        return $this->hasMany(User::class, 'role_id', 'role_id');
+        return $this->hasMany(User::class, 'role_id', 'id');
     }
 }
