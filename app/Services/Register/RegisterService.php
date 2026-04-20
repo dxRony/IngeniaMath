@@ -17,7 +17,6 @@ class RegisterService
             'role_id' => 4, // es student
             'first_name' => $firstName,
             'last_name' => $lastName,
-            'name' => trim($firstName . ' ' . $lastName),
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'is_active' => true,

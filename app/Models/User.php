@@ -17,7 +17,6 @@ class User extends Authenticatable
         'role_id',
         'first_name',
         'last_name',
-        'name',
         'email',
         'password',
         'is_active',
