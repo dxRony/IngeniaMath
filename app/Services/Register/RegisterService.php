@@ -10,13 +10,17 @@ class RegisterService
 {
     public function registerStudent(Request $request): void
     {
+        $firstName = trim($request->first_name);
+        $lastName = trim($request->last_name);
+
         User::create([
             'role_id' => 4, // es student
-            'name' => $request->name,
-            'lastname' => $request->lastname,
+            'first_name' => $firstName,
+            'last_name' => $lastName,
+            'name' => trim($firstName . ' ' . $lastName),
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'active' => true,
+            'is_active' => true,
         ]);
     }
 }

@@ -23,11 +23,11 @@
         @csrf
         <div class="mb-3">
             <label class="form-label">Nombre</label>
-            <input type="text" name="name" class="form-control" required>
+            <input type="text" name="first_name" class="form-control" required>
         </div>
         <div class="mb-3">
             <label class="form-label">Apellido</label>
-            <input type="text" name="lastname" class="form-control" required>
+            <input type="text" name="last_name" class="form-control" required>
         </div>
         <div class="mb-3">
             <label class="form-label">Correo</label>

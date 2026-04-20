@@ -23,7 +23,7 @@ class LoginService
         $request->session()->regenerate();
         $user = Auth::user();
 
-        if (!$user->active) {
+        if (!$user->is_active) {
             Auth::logout();
 
             return [
