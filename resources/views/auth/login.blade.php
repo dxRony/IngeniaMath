@@ -17,6 +17,12 @@
             {{ $errors->first('login') }}
         </div>
     @endif
+    <!-- success -->
+    @if(session('success'))
+        <div class="alert alert-success">
+            {{ session('success') }}
+        </div>
+    @endif
     <form action="{{ route('login.store') }}" method="POST">
         @csrf
         <!-- Email -->
@@ -46,7 +52,10 @@
         </button>
     </form>
     <div class="text-center mt-3">
-        <a href="{{ route('home') }}">← Volver</a>
+        <a href="{{ route('register.index') }}">¿No tienes cuenta estudiante? Registrate!!</a>
+    </div>
+    <div class="text-center mt-3">
+        <a href="{{ route('home') }}">Volver</a>
     </div>
 
 </div>
