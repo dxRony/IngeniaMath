@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Login\LoginController;
 use App\Http\Controllers\Moderator\ModeratorDashboardController;
+use App\Http\Controllers\Register\RegisterController;
 use App\Http\Controllers\Student\StudentDashboardController;
 use App\Http\Controllers\Tutor\TutorDashboardController;
 use Illuminate\Support\Facades\Route;
@@ -14,6 +15,8 @@ Route::get('/', function () {
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'index'])->name('login.index');
     Route::post('/login', [LoginController::class, 'login'])->name('login.store');
+    Route::get('/register', [RegisterController::class, 'index'])->name('register.index');
+    Route::post('/register', [RegisterController::class, 'store'])->name('register.store');
 });
 
 Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->name('logout');

@@ -12,4 +12,7 @@
     <li class="nav-item">
         <a class="nav-link text-white" href=#>Funci 1</a>
     </li>
+    <li class="nav-item">
+        <a class="nav-link text-white" href=#>Funci 2</a>
+    </li>
 @endsection

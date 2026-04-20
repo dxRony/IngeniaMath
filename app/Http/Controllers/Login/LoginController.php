@@ -12,7 +12,8 @@ class LoginController extends Controller
 {
     public function __construct(
         private LoginService $loginService
-    ) {
+    )
+    {
     }
 
     public function index(): View
