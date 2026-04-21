@@ -14,6 +14,18 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RoleSeeder::class,
             UserSeeder::class,
+            MasteryLevelSeeder::class,
+            TopicSeeder::class,
+            SubtopicComplexitySeeder::class,
+            ExerciseLevelSeeder::class,
+            ExerciseTypeSeeder::class,
+            ExerciseStatusSeeder::class,
+            PracticeStatusSeeder::class,
+            SessionModeSeeder::class,
+            DifficultyLevelSeeder::class,
+            RecommendationReasonSeeder::class,
+            ResourceTypeSeeder::class,
+            ResourceStatusSeeder::class,
         ]);
     }
 }
