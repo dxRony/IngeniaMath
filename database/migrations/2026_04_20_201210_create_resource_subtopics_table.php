@@ -1,0 +1,29 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('resource_subtopics', function (Blueprint $table) {
+            $table->foreignId('resource_id')->constrained('educational_resources')->cascadeOnDelete();
+            $table->foreignId('subtopic_id')->constrained('subtopics')->cascadeOnDelete();
+            $table->primary(['resource_id', 'subtopic_id']);
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('resource_subtopics');
+    }
+};
