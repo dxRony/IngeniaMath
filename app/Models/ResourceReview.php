@@ -9,13 +9,12 @@ class ResourceReview extends Model
 {
     protected $table = 'resource_reviews';
 
-    public $timestamps = false;
 
     protected $fillable = [
         'resource_id',
         'reviewed_by',
         'is_approved',
-        'comment',
+        'feedback',
         'reviewed_at',
     ];
 

@@ -10,18 +10,15 @@ class LearningPath extends Model
 {
     protected $table = 'learning_paths';
 
-    public $timestamps = false;
 
     protected $fillable = [
         'student_id',
-        'generated_at',
         'is_active',
     ];
 
     protected function casts(): array
     {
         return [
-            'generated_at' => 'datetime',
             'is_active' => 'boolean',
         ];
     }

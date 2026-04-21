@@ -9,7 +9,6 @@ class Flashcard extends Model
 {
     protected $table = 'flashcards';
 
-    public $timestamps = false;
 
     protected $fillable = [
         'resource_id',

@@ -31,7 +31,7 @@ class Topic extends Model
 
     public function assessmentModuleResults(): HasMany
     {
-        return $this->hasMany(AssessmentModuleResult::class, 'module_id', 'id');
+        return $this->hasMany(AssessmentModuleResult::class, 'topic_id', 'id');
     }
 
     public function practiceSessions(): HasMany

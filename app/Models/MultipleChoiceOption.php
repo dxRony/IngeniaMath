@@ -9,11 +9,10 @@ class MultipleChoiceOption extends Model
 {
     protected $table = 'multiple_choice_options';
 
-    public $timestamps = false;
 
     protected $fillable = [
         'exercise_id',
-        'text',
+        'option_text',
         'is_correct',
         'order',
     ];

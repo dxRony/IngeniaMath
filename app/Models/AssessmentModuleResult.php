@@ -9,11 +9,10 @@ class AssessmentModuleResult extends Model
 {
     protected $table = 'assessment_module_results';
 
-    public $timestamps = false;
 
     protected $fillable = [
         'assessment_id',
-        'module_id',
+        'topic_id',
         'mastery_level_id',
         'score',
     ];
@@ -23,9 +22,9 @@ class AssessmentModuleResult extends Model
         return $this->belongsTo(InitialAssessment::class, 'assessment_id', 'id');
     }
 
-    public function module(): BelongsTo
+    public function topic(): BelongsTo
     {
-        return $this->belongsTo(Topic::class, 'module_id', 'id');
+        return $this->belongsTo(Topic::class, 'topic_id', 'id');
     }
 
     public function masteryLevel(): BelongsTo

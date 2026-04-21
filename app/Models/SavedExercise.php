@@ -9,7 +9,6 @@ class SavedExercise extends Model
 {
     protected $table = 'saved_exercises';
 
-    public $timestamps = false;
 
     protected $fillable = [
         'student_id',

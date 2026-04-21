@@ -10,12 +10,10 @@ class ExamConfig extends Model
 {
     protected $table = 'exam_configs';
 
-    public $timestamps = false;
 
     protected $fillable = [
         'duration_minutes',
         'total_questions',
-        'created_at',
         'created_by',
         'is_active',
         'min_passing_score',
@@ -26,7 +24,6 @@ class ExamConfig extends Model
         return [
             'duration_minutes' => 'integer',
             'total_questions' => 'integer',
-            'created_at' => 'datetime',
             'is_active' => 'boolean',
             'min_passing_score' => 'float',
         ];

@@ -9,7 +9,6 @@ class SessionExercise extends Model
 {
     protected $table = 'session_exercises';
 
-    public $timestamps = false;
 
     protected $fillable = [
         'session_id',

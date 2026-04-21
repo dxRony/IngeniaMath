@@ -9,20 +9,17 @@ class PlanDay extends Model
 {
     protected $table = 'plan_days';
 
-    public $timestamps = false;
 
     protected $fillable = [
         'weekly_plan_id',
         'weekday',
         'subtopic_id',
-        'recommended_exercises',
         'estimated_minutes',
     ];
 
     protected function casts(): array
     {
         return [
-            'recommended_exercises' => 'integer',
             'estimated_minutes' => 'integer',
         ];
     }

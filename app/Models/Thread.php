@@ -10,21 +10,18 @@ class Thread extends Model
 {
     protected $table = 'threads';
 
-    public $timestamps = false;
 
     protected $fillable = [
         'subtopic_id',
         'title',
         'description',
         'created_by',
-        'created_at',
         'is_closed',
     ];
 
     protected function casts(): array
     {
         return [
-            'created_at' => 'datetime',
             'is_closed' => 'boolean',
         ];
     }

@@ -9,13 +9,12 @@ class ExerciseReview extends Model
 {
     protected $table = 'exercise_reviews';
 
-    public $timestamps = false;
 
     protected $fillable = [
         'exercise_id',
         'reviewed_by',
         'is_approved',
-        'comment',
+        'feedback',
         'reviewed_at',
     ];
 

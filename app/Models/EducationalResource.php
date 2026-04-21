@@ -11,7 +11,6 @@ class EducationalResource extends Model
 {
     protected $table = 'educational_resources';
 
-    public $timestamps = false;
 
     protected $fillable = [
         'type_id',
@@ -20,15 +19,7 @@ class EducationalResource extends Model
         'description',
         'url',
         'created_by',
-        'created_at',
     ];
-
-    protected function casts(): array
-    {
-        return [
-            'created_at' => 'datetime',
-        ];
-    }
 
     public function type(): BelongsTo
     {

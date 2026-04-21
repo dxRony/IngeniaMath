@@ -9,7 +9,6 @@ class ExerciseStep extends Model
 {
     protected $table = 'exercise_steps';
 
-    public $timestamps = false;
 
     protected $fillable = [
         'exercise_id',

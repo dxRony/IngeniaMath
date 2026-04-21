@@ -9,7 +9,6 @@ class MockExamExercise extends Model
 {
     protected $table = 'mock_exam_exercises';
 
-    public $timestamps = false;
 
     public $incrementing = false;
 

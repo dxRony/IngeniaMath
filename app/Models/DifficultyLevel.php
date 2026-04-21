@@ -5,9 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Difficulty extends Model
+class DifficultyLevel extends Model
 {
-    protected $table = 'difficulties';
+    protected $table = 'difficulty_levels';
 
     public $timestamps = false;
 

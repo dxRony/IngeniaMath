@@ -10,7 +10,6 @@ class MockExam extends Model
 {
     protected $table = 'mock_exams';
 
-    public $timestamps = false;
 
     protected $fillable = [
         'student_id',

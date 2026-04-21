@@ -9,7 +9,6 @@ class PathItem extends Model
 {
     protected $table = 'path_items';
 
-    public $timestamps = false;
 
     protected $fillable = [
         'path_id',

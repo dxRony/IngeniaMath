@@ -7,9 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class RecommendationHistory extends Model
 {
-    protected $table = 'recommendation_history';
-
-    public $timestamps = false;
+    protected $table = 'recommendation_histories';
 
     protected $fillable = [
         'session_id',

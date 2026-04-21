@@ -9,7 +9,6 @@ class RelatedExercise extends Model
 {
     protected $table = 'related_exercises';
 
-    public $timestamps = false;
 
     public $incrementing = false;
 

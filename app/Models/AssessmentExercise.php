@@ -9,7 +9,6 @@ class AssessmentExercise extends Model
 {
     protected $table = 'assessment_exercises';
 
-    public $timestamps = false;
 
     public $incrementing = false;
 
@@ -21,12 +20,14 @@ class AssessmentExercise extends Model
         'order',
         'given_answer',
         'is_correct',
+        'answered_at',
     ];
 
     protected function casts(): array
     {
         return [
             'is_correct' => 'boolean',
+            'answered_at' => 'datetime',
         ];
     }
 

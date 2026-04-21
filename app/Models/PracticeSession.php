@@ -10,14 +10,12 @@ class PracticeSession extends Model
 {
     protected $table = 'practice_sessions';
 
-    public $timestamps = false;
 
     protected $fillable = [
         'student_id',
         'mode_id',
         'topic_id',
         'initial_difficulty_id',
-        'date',
         'started_at',
         'ended_at',
         'total_exercises',
@@ -30,7 +28,6 @@ class PracticeSession extends Model
     protected function casts(): array
     {
         return [
-            'date' => 'date',
             'started_at' => 'datetime',
             'ended_at' => 'datetime',
             'total_exercises' => 'integer',
@@ -57,7 +54,7 @@ class PracticeSession extends Model
 
     public function initialDifficulty(): BelongsTo
     {
-        return $this->belongsTo(Difficulty::class, 'initial_difficulty_id', 'id');
+        return $this->belongsTo(DifficultyLevel::class, 'initial_difficulty_id', 'id');
     }
 
     public function status(): BelongsTo

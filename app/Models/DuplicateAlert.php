@@ -9,22 +9,18 @@ class DuplicateAlert extends Model
 {
     protected $table = 'duplicate_alerts';
 
-    public $timestamps = false;
-
     protected $fillable = [
         'new_exercise_id',
         'existing_exercise_id',
         'similarity',
-        'created_at',
-        'is_reviewed',
+        'is_resolved',
     ];
 
     protected function casts(): array
     {
         return [
             'similarity' => 'float',
-            'created_at' => 'datetime',
-            'is_reviewed' => 'boolean',
+            'is_resolved' => 'boolean',
         ];
     }
 

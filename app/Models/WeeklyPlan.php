@@ -10,7 +10,6 @@ class WeeklyPlan extends Model
 {
     protected $table = 'weekly_plans';
 
-    public $timestamps = false;
 
     protected $fillable = [
         'path_id',

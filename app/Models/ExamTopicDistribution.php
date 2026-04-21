@@ -7,9 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ExamTopicDistribution extends Model
 {
-    protected $table = 'exam_topic_distribution';
-
-    public $timestamps = false;
+    protected $table = 'exam_topic_distributions';
 
     protected $fillable = [
         'config_id',

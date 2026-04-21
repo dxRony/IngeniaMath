@@ -7,9 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SessionTopicSummary extends Model
 {
-    protected $table = 'session_topic_summary';
-
-    public $timestamps = false;
+    protected $table = 'session_topic_summaries';
 
     protected $fillable = [
         'session_id',

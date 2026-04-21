@@ -10,18 +10,15 @@ class InitialAssessment extends Model
 {
     protected $table = 'initial_assessments';
 
-    public $timestamps = false;
 
     protected $fillable = [
         'student_id',
-        'created_at',
         'is_completed',
     ];
 
     protected function casts(): array
     {
         return [
-            'created_at' => 'datetime',
             'is_completed' => 'boolean',
         ];
     }

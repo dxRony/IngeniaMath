@@ -9,7 +9,6 @@ class SubtopicPrerequisite extends Model
 {
     protected $table = 'subtopic_prerequisites';
 
-    public $timestamps = false;
 
     public $incrementing = false;
 

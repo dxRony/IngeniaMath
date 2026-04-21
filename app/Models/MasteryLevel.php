@@ -9,7 +9,6 @@ class MasteryLevel extends Model
 {
     protected $table = 'mastery_levels';
 
-    public $timestamps = false;
 
     protected $fillable = [
         'name',

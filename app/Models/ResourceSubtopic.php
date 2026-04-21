@@ -7,9 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ResourceSubtopic extends Model
 {
-    protected $table = 'resource_subtopic';
-
-    public $timestamps = false;
+    protected $table = 'resource_subtopics';
 
     public $incrementing = false;
 

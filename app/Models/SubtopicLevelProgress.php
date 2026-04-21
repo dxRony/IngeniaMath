@@ -9,7 +9,6 @@ class SubtopicLevelProgress extends Model
 {
     protected $table = 'subtopic_level_progress';
 
-    public $timestamps = false;
 
     protected $fillable = [
         'student_id',
@@ -20,7 +19,6 @@ class SubtopicLevelProgress extends Model
         'total_exercises',
         'total_correct',
         'accuracy_percentage',
-        'updated_at',
     ];
 
     protected function casts(): array
@@ -31,7 +29,6 @@ class SubtopicLevelProgress extends Model
             'total_exercises' => 'integer',
             'total_correct' => 'integer',
             'accuracy_percentage' => 'float',
-            'updated_at' => 'datetime',
         ];
     }
 
@@ -47,6 +44,6 @@ class SubtopicLevelProgress extends Model
 
     public function currentDifficulty(): BelongsTo
     {
-        return $this->belongsTo(Difficulty::class, 'current_difficulty_id', 'id');
+        return $this->belongsTo(DifficultyLevel::class, 'current_difficulty_id', 'id');
     }
 }
