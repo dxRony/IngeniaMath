@@ -1,0 +1,100 @@
+<?php
+
+namespace App\Services\Tutor;
+
+use App\Models\Exercise;
+use App\Models\ExerciseStatus;
+use App\Models\ExerciseType;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+class ExerciseService
+{
+    public function getTutorExercises(int $userId): Collection
+    {
+        return Exercise::with(['subtopic.topic', 'level', 'type', 'status'])
+            ->where('created_by', $userId)->latest()->get();
+    }
+
+    public function createExercise(Request $request, int $userId): Exercise
+    {
+        $draftStatus = ExerciseStatus::where('name', 'Borrador')->firstOrFail();
+        $multipleChoiceType = ExerciseType::where('name', 'Opción múltiple')->first();
+
+        return DB::transaction(function () use ($request, $userId, $draftStatus, $multipleChoiceType) {
+            $imagePath = null;
+
+            if ($request->hasFile('image_file')) {
+                $imagePath = $request->file('image_file')->store('exercises', 'public');
+            }
+
+            $exercise = Exercise::create([
+                'subtopic_id' => $request->subtopic_id,
+                'level_id' => $request->level_id,
+                'type_id' => $request->type_id,
+                'status_id' => $draftStatus->id,
+                'statement' => $request->statement,
+                'image_url' => $imagePath,
+                'correct_answer' => $request->correct_answer,
+                'estimated_minutes' => $request->estimated_minutes,
+                'created_by' => $userId,
+            ]);
+
+            if ($request->has('steps') && is_array($request->steps)) {
+                foreach ($request->steps as $index => $step) {
+                    $description = trim($step['description'] ?? '');
+
+                    if ($description === '') {
+                        continue;
+                    }
+
+                    $stepImagePath = null;
+
+                    if ($request->hasFile("steps.$index.image_file")) {
+                        $stepImagePath = $request->file("steps.$index.image_file")->store('exercise-steps', 'public');
+                    }
+
+                    $exercise->steps()->create([
+                        'step_number' => $index + 1,
+                        'description' => $description,
+                        'image_url' => $stepImagePath,
+                    ]);
+                }
+            }
+            if ($multipleChoiceType && (int) $request->type_id === (int) $multipleChoiceType->id) {
+                $correctOptionIndex = $request->correct_option;
+
+                if ($request->has('options') && is_array($request->options)) {
+                    foreach ($request->options as $index => $option) {
+                        $optionText = trim($option['option_text'] ?? '');
+
+                        if ($optionText === '') {
+                            continue;
+                        }
+                        $exercise->multipleChoiceOptions()->create([
+                            'option_text' => $optionText,
+                            'is_correct' => ((int) $correctOptionIndex === (int) $index),
+                            'order' => $index + 1,
+                        ]);
+                    }
+                }
+            }
+            return $exercise;
+        });
+    }
+
+    public function submitToReview(Exercise $exercise, int $userId): void
+    {
+        if ((int) $exercise->created_by !== $userId) {
+            abort(403, 'No puedes enviar a revisión un ejercicio que no te pertenece.');
+        }
+        $draftStatus = ExerciseStatus::where('name', 'Borrador')->firstOrFail();
+        $reviewStatus = ExerciseStatus::where('name', 'En revisión')->firstOrFail();
+
+        if ((int) $exercise->status_id !== (int) $draftStatus->id) {
+            abort(400, 'Solo los ejercicios en borrador pueden enviarse a revisión.');
+        }
+        $exercise->update(['status_id' => $reviewStatus->id,]);
+    }
+}
