@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
             RecommendationReasonSeeder::class,
             ResourceTypeSeeder::class,
             ResourceStatusSeeder::class,
+            SubtopicSeeder::class,
         ]);
     }
 }
