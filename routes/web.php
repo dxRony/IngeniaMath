@@ -33,6 +33,7 @@ Route::prefix('moderator')->middleware(['auth', 'role:2'])->group(function () {
     Route::get('/dashboard', [ModeratorDashboardController::class, 'index'])->name('moderator.dashboard');
     Route::get('/exercises/review', [ModeratorExerciseReviewController::class, 'index'])->name('moderator.exercises.review.index');
     Route::get('/exercises/review/{exercise}', [ModeratorExerciseReviewController::class, 'show'])->name('moderator.exercises.review.show');
+    Route::post('/exercises/review/{exercise}', [ModeratorExerciseReviewController::class, 'review'])->name('moderator.exercises.review.store');
 });
 
 // Tutor
