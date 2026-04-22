@@ -87,7 +87,7 @@ class Subtopic extends Model
     {
         return $this->belongsToMany(
             EducationalResource::class,
-            'resource_subtopic',
+            'resource_subtopics',
             'subtopic_id',
             'resource_id'
         );

@@ -6,6 +6,8 @@ use App\Http\Controllers\Moderator\ModeratorDashboardController;
 use App\Http\Controllers\Register\RegisterController;
 use App\Http\Controllers\Student\StudentDashboardController;
 use App\Http\Controllers\Tutor\TutorDashboardController;
+
+use App\Http\Controllers\Tutor\Resources\ResourceController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -34,7 +36,14 @@ Route::prefix('moderator')->middleware(['auth', 'role:2'])->group(function () {
 // Tutor
 Route::prefix('tutor')->middleware(['auth', 'role:3'])->group(function () {
     Route::get('/dashboard', [TutorDashboardController::class, 'index'])->name('tutor.dashboard');
+
+    Route::prefix('resources')->name('tutor.resources.')->group(function () {
+        Route::get('/create', [ResourceController::class, 'create'])->name('create');
+        Route::post('/', [ResourceController::class, 'store'])->name('store');
+    });
 });
+
+
 
 // Student
 Route::prefix('student')->middleware(['auth', 'role:4'])->group(function () {

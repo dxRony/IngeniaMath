@@ -40,7 +40,7 @@ class EducationalResource extends Model
     {
         return $this->belongsToMany(
             Subtopic::class,
-            'resource_subtopic',
+            'resource_subtopics',
             'resource_id',
             'subtopic_id'
         );
