@@ -24,11 +24,9 @@ class LoginService
         $user = Auth::user();
 
         if (!$user->is_active) {
-            Auth::logout();
-
             return [
-                'success' => false,
-                'message' => 'Inactive user.',
+                'success' => true,
+                'route' => 'account.disabled',
             ];
         }
         $redirectRoute = $this->getRedirectRouteByRole($user->role_id);

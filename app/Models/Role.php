@@ -20,4 +20,20 @@ class Role extends Model
     {
         return $this->hasMany(User::class, 'role_id', 'id');
     }
+
+    public function getRealNameAttribute()
+    {
+        switch ($this->name) {
+            case 'admin':
+                return 'Administrador';
+            case 'moderator':
+                return 'Moderador';
+            case 'tutor':
+                return 'Tutor';
+            case 'student':
+                return 'Estudiante';
+            default:
+                return $this->name;
+        }
+    }
 }
