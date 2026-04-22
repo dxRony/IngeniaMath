@@ -42,6 +42,8 @@ Route::prefix('tutor')->middleware(['auth', 'role:3'])->group(function () {
     Route::get('/exercises/create', [TutorExerciseController::class, 'create'])->name('tutor.exercises.create');
     Route::post('/exercises', [TutorExerciseController::class, 'store'])->name('tutor.exercises.store');
     Route::patch('/exercises/{exercise}/submit-review', [TutorExerciseController::class, 'submitReview'])->name('tutor.exercises.submitReview');
+    Route::get('/exercises/{exercise}/edit', [TutorExerciseController::class, 'edit'])->name('tutor.exercises.edit');
+    Route::put('/exercises/{exercise}', [TutorExerciseController::class, 'update'])->name('tutor.exercises.update');
 });
 
 // Student

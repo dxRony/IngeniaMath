@@ -40,17 +40,23 @@
                                 <td>{{ $exercise->type->name }}</td>
                                 <td>{{ $exercise->status->name }}</td>
                                 <td>
-                                    @if($exercise->status->name === 'Borrador')
-                                        <form action="{{ route('tutor.exercises.submitReview', $exercise) }}" method="POST">
-                                            @csrf
-                                            @method('PATCH')
-                                            <button type="submit" class="btn btn-sm btn-warning">
-                                                Enviar a revisión
-                                            </button>
-                                        </form>
-                                    @else
-                                        <span class="text-muted">Sin acciones</span>
-                                    @endif
+                                    <div class="d-flex gap-2">
+                                        @if($exercise->status->name === 'Borrador')
+                                            <a href="{{ route('tutor.exercises.edit', $exercise) }}" class="btn btn-sm btn-primary">
+                                                Editar
+                                            </a>
+
+                                            <form action="{{ route('tutor.exercises.submitReview', $exercise) }}" method="POST">
+                                                @csrf
+                                                @method('PATCH')
+                                                <button type="submit" class="btn btn-sm btn-warning">
+                                                    Enviar a revisión
+                                                </button>
+                                            </form>
+                                        @else
+                                            <span class="text-muted">Sin acciones</span>
+                                        @endif
+                                    </div>
                                 </td>
                             </tr>
                         @endforeach

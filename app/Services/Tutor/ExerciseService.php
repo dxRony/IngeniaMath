@@ -8,6 +8,7 @@ use App\Models\ExerciseType;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class ExerciseService
 {
@@ -62,7 +63,7 @@ class ExerciseService
                     ]);
                 }
             }
-            if ($multipleChoiceType && (int) $request->type_id === (int) $multipleChoiceType->id) {
+            if ($multipleChoiceType && (int)$request->type_id === (int)$multipleChoiceType->id) {
                 $correctOptionIndex = $request->correct_option;
 
                 if ($request->has('options') && is_array($request->options)) {
@@ -74,7 +75,7 @@ class ExerciseService
                         }
                         $exercise->multipleChoiceOptions()->create([
                             'option_text' => $optionText,
-                            'is_correct' => ((int) $correctOptionIndex === (int) $index),
+                            'is_correct' => ((int)$correctOptionIndex === (int)$index),
                             'order' => $index + 1,
                         ]);
                     }
@@ -86,15 +87,91 @@ class ExerciseService
 
     public function submitToReview(Exercise $exercise, int $userId): void
     {
-        if ((int) $exercise->created_by !== $userId) {
+        if ((int)$exercise->created_by !== $userId) {
             abort(403, 'No puedes enviar a revisión un ejercicio que no te pertenece.');
         }
         $draftStatus = ExerciseStatus::where('name', 'Borrador')->firstOrFail();
         $reviewStatus = ExerciseStatus::where('name', 'En revisión')->firstOrFail();
 
-        if ((int) $exercise->status_id !== (int) $draftStatus->id) {
+        if ((int)$exercise->status_id !== (int)$draftStatus->id) {
             abort(400, 'Solo los ejercicios en borrador pueden enviarse a revisión.');
         }
         $exercise->update(['status_id' => $reviewStatus->id,]);
+    }
+
+    public function updateExercise(Request $request, Exercise $exercise, int $userId): Exercise
+    {
+        if ((int)$exercise->created_by !== $userId) {
+            abort(403, 'No puedes actualizar un ejercicio que no te pertenece.');
+        }
+
+        return DB::transaction(function () use ($request, $exercise) {
+            $imagePath = $exercise->image_url;
+
+            if ($request->hasFile('image_file')) {
+                if ($imagePath) {
+                    Storage::disk('public')->delete($imagePath);
+                }
+                $imagePath = $request->file('image_file')->store('exercises', 'public');
+            }
+
+            $exercise->update([
+                'subtopic_id' => $request->subtopic_id,
+                'level_id' => $request->level_id,
+                'type_id' => $request->type_id,
+                'statement' => $request->statement,
+                'image_url' => $imagePath,
+                'correct_answer' => $request->correct_answer,
+                'estimated_minutes' => $request->estimated_minutes,
+            ]);
+            $oldSteps = $exercise->steps()->get();
+            $exercise->multipleChoiceOptions()->delete();
+            $exercise->steps()->delete();
+
+            if ($request->has('steps') && is_array($request->steps)) {
+                foreach ($request->steps as $index => $step) {
+                    $description = trim($step['description'] ?? '');
+                    if ($description === '') {
+                        continue;
+                    }
+                    $existingImagePath = $step['existing_image_url'] ?? null;
+                    $stepImagePath = $existingImagePath;
+
+                    if ($request->hasFile("steps.$index.image_file")) {
+                        if ($existingImagePath) {
+                            Storage::disk('public')->delete($existingImagePath);
+                        }
+
+                        $stepImagePath = $request->file("steps.$index.image_file")->store('exercise-steps', 'public');
+                    }
+                    $exercise->steps()->create([
+                        'step_number' => $index + 1,
+                        'description' => $description,
+                        'image_url' => $stepImagePath,
+                    ]);
+                }
+            }
+            $multipleChoiceType = ExerciseType::where('name', 'Opción múltiple')->first();
+
+            if ($multipleChoiceType && (int)$request->type_id === (int)$multipleChoiceType->id) {
+                $correctOptionIndex = $request->correct_option;
+
+                if ($request->has('options') && is_array($request->options)) {
+                    foreach ($request->options as $index => $option) {
+                        $optionText = trim($option['option_text'] ?? '');
+
+                        if ($optionText === '') {
+                            continue;
+                        }
+                        $exercise->multipleChoiceOptions()->create([
+                            'option_text' => $optionText,
+                            'is_correct' => ((int)$correctOptionIndex === (int)$index),
+                            'order' => $index + 1,
+                        ]);
+                    }
+                }
+            }
+            return $exercise;
+        });
     }
 }
