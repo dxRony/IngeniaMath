@@ -8,6 +8,7 @@ use App\Services\Moderator\ExerciseReviewService;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use App\Models\DuplicateAlert;
 
 class ModeratorExerciseReviewController extends Controller
 {
@@ -49,4 +50,28 @@ class ModeratorExerciseReviewController extends Controller
                 ? 'Ejercicio aprobado correctamente.'
                 : 'Ejercicio rechazado y devuelto a borrador.');
     }
+
+    public function showDuplicate(DuplicateAlert $duplicateAlert): View
+    {
+        $alert = $this->exerciseReviewService->getAlertDetail($duplicateAlert->id);
+        return view('moderator.duplicate-alerts.show', compact('alert'));
+    }
+
+    public function resolve(DuplicateAlert $duplicateAlert): RedirectResponse
+    {
+        $this->exerciseReviewService->markAsResolved($duplicateAlert);
+
+        return redirect()
+            ->route('moderator.exercises.review.index')
+            ->with('success', 'Alerta marcada como resuelta.');
+    }
+
+    public function rejectNewExercise(DuplicateAlert $duplicateAlert): RedirectResponse
+    {
+        $this->exerciseReviewService->rejectNewExerciseFromAlert($duplicateAlert, auth()->id());
+
+        return redirect()->route('moderator.exercises.review.index')
+            ->with('success', 'Ejercicio nuevo rechazado por duplicado y alerta resuelta.');
+    }
+
 }

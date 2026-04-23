@@ -34,6 +34,9 @@ Route::prefix('moderator')->middleware(['auth', 'role:2'])->group(function () {
     Route::get('/exercises/review', [ModeratorExerciseReviewController::class, 'index'])->name('moderator.exercises.review.index');
     Route::get('/exercises/review/{exercise}', [ModeratorExerciseReviewController::class, 'show'])->name('moderator.exercises.review.show');
     Route::post('/exercises/review/{exercise}', [ModeratorExerciseReviewController::class, 'review'])->name('moderator.exercises.review.store');
+    Route::get('/duplicate-alerts/{duplicateAlert}', [ModeratorExerciseReviewController::class, 'showDuplicate'])->name('moderator.duplicate-alerts.show');
+    Route::patch('/duplicate-alerts/{duplicateAlert}/resolve', [ModeratorExerciseReviewController::class, 'resolve'])->name('moderator.duplicate-alerts.resolve');
+    Route::patch('/duplicate-alerts/{duplicateAlert}/reject-new-exercise', [ModeratorExerciseReviewController::class, 'rejectNewExercise'])->name('moderator.duplicate-alerts.reject-new-exercise');
 });
 
 // Tutor

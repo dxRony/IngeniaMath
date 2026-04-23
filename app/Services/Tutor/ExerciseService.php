@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use App\Models\DuplicateAlert;
 
 class ExerciseService
 {
@@ -25,7 +26,7 @@ class ExerciseService
         ])->where('created_by', $userId)->latest()->get();
     }
 
-    public function createExercise(Request $request, int $userId): Exercise
+    public function createExercise(Request $request, int $userId): array
     {
         $draftStatus = ExerciseStatus::where('name', 'Borrador')->firstOrFail();
         $multipleChoiceType = ExerciseType::where('name', 'Opción múltiple')->first();
@@ -48,7 +49,6 @@ class ExerciseService
                 'estimated_minutes' => $request->estimated_minutes,
                 'created_by' => $userId,
             ]);
-
             if ($request->has('steps') && is_array($request->steps)) {
                 foreach ($request->steps as $index => $step) {
                     $description = trim($step['description'] ?? '');
@@ -87,7 +87,12 @@ class ExerciseService
                 }
             }
             $this->syncRelatedExercises($exercise, $request->related_exercises ?? []);
-            return $exercise;
+            $duplicates = $this->detectAndStoreDuplicateAlerts($exercise);
+
+            return [
+                'exercise' => $exercise,
+                'duplicates' => $duplicates,
+            ];
         });
     }
 
@@ -105,12 +110,11 @@ class ExerciseService
         $exercise->update(['status_id' => $reviewStatus->id,]);
     }
 
-    public function updateExercise(Request $request, Exercise $exercise, int $userId): Exercise
+    public function updateExercise(Request $request, Exercise $exercise, int $userId): array
     {
         if ((int) $exercise->created_by !== $userId) {
             abort(403, 'No puedes actualizar un ejercicio que no te pertenece.');
         }
-
         return DB::transaction(function () use ($request, $exercise) {
             $imagePath = $exercise->image_url;
 
@@ -130,7 +134,7 @@ class ExerciseService
                 'concept_explanation' => $request->concept_explanation,
                 'estimated_minutes' => $request->estimated_minutes,
             ]);
-            $oldSteps = $exercise->steps()->get();
+
             $exercise->multipleChoiceOptions()->delete();
             $exercise->steps()->delete();
 
@@ -178,7 +182,10 @@ class ExerciseService
                 }
             }
             $this->syncRelatedExercises($exercise, $request->related_exercises ?? []);
-            return $exercise;
+            DuplicateAlert::where('new_exercise_id', $exercise->id)->delete();
+            $duplicates = $this->detectAndStoreDuplicateAlerts($exercise);
+
+            return ['exercise' => $exercise, 'duplicates' => $duplicates,];
         });
     }
 
@@ -210,5 +217,52 @@ class ExerciseService
             ->pluck('id')
             ->toArray();
         $exercise->relatedExercises()->sync($validIds);
+    }
+
+    private function detectAndStoreDuplicateAlerts(Exercise $exercise): array
+    {
+        $exercise->load('subtopic.topic');
+        $topicId = $exercise->subtopic->topic_id;
+        $newStatement = $this->normalizeText($exercise->statement);
+        $possibleDuplicates = Exercise::query()
+            ->with('subtopic')
+            ->where('id', '!=', $exercise->id)
+            ->whereHas('subtopic', function ($query) use ($topicId) {
+                $query->where('topic_id', $topicId);
+            })->get();
+        $foundDuplicates = [];
+
+        foreach ($possibleDuplicates as $existingExercise) {
+            $existingStatement = $this->normalizeText($existingExercise->statement);
+
+            similar_text($newStatement, $existingStatement, $similarity);
+
+            if ($similarity >= 70) {
+                DuplicateAlert::updateOrCreate(
+                    [
+                        'new_exercise_id' => $exercise->id,
+                        'existing_exercise_id' => $existingExercise->id,
+                    ],
+                    [
+                        'similarity' => round($similarity, 2),
+                        'created_at' => now(),
+                        'is_resolved' => false,
+                    ]
+                );
+                $foundDuplicates[] = [
+                    'exercise_id' => $existingExercise->id,
+                    'similarity' => round($similarity, 2),
+                ];
+            }
+        }
+        return $foundDuplicates;
+    }
+
+    private function normalizeText(string $text): string
+    {
+        $text = mb_strtolower($text, 'UTF-8');
+        $text = strip_tags($text);
+        $text = preg_replace('/\s+/', ' ', $text);
+        return trim($text);
     }
 }

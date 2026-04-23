@@ -19,7 +19,9 @@
             {{ $errors->first() }}
         </div>
     @endif
-
+    @php
+        $hasPendingDuplicateAlerts = $exercise->duplicateAlertsAsNew->isNotEmpty();
+    @endphp
     <div class="card shadow-sm mb-4">
         <div class="card-body">
             <h4 class="fw-bold mb-3">Información general</h4>
@@ -139,6 +141,32 @@
         </div>
     </div>
 
+    @if($hasPendingDuplicateAlerts)
+        <div class="alert alert-warning">
+            <strong>Atención:</strong> este ejercicio tiene alertas de duplicado pendientes.
+            Debes revisarlas y resolverlas antes de aprobar el ejercicio.
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h4 class="fw-bold mb-3">Alertas de duplicado pendientes</h4>
+
+                <ul class="mb-0">
+                    @foreach($exercise->duplicateAlertsAsNew as $alert)
+                        <li class="mb-2">
+                            Posible duplicado con el ejercicio
+                            <strong>#{{ $alert->existingExercise->id }}</strong>
+                            (similitud: {{ $alert->similarity }}%)
+                            —
+                            <a href="{{ route('moderator.duplicate-alerts.show', $alert) }}">
+                                Ver alerta
+                            </a>
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+        </div>
+    @endif
     @if($exercise->status->name === 'En revisión')
         <div class="card shadow-sm">
             <div class="card-body">
@@ -155,13 +183,21 @@
                     </div>
 
                     <div class="d-flex gap-2">
-                        <button type="submit" name="decision" value="approve" class="btn btn-success">
+                        <button type="submit" name="decision" value="approve"
+                                class="btn btn-success"{{ $hasPendingDuplicateAlerts ? 'disabled' : '' }}>
                             Aprobar ejercicio
                         </button>
+
                         <button type="submit" name="decision" value="reject" class="btn btn-danger">
                             Rechazar ejercicio
                         </button>
                     </div>
+
+                    @if($hasPendingDuplicateAlerts)
+                        <small class="text-danger d-block mt-2">
+                            No puedes aprobar este ejercicio mientras existan alertas de duplicado sin resolver.
+                        </small>
+                    @endif
 
                     <small class="text-muted d-block mt-2">
                         Si rechazas el ejercicio, regresará a borrador para que el tutor lo corrija.

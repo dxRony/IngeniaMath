@@ -10,6 +10,18 @@
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
+    @if(session('duplicate_alerts'))
+        <div class="alert alert-warning">
+            <strong>Posibles ejercicios duplicados detectados:</strong>
+            <ul class="mb-0 mt-2">
+                @foreach(session('duplicate_alerts') as $duplicate)
+                    <li>
+                        Ejercicio #{{ $duplicate['exercise_id'] }} con similitud de {{ $duplicate['similarity'] }}%
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
 
     <div class="card shadow-sm">
         <div class="card-body">
@@ -58,7 +70,8 @@
                                     @if($latestReview)
                                         <div>
                                             <strong>{{ $latestReview->is_approved ? 'Aprobado' : 'Rechazado' }}</strong><br>
-                                            <small class="text-muted">{{ $latestReview->reviewed_at?->format('d/m/Y H:i') }}</small>
+                                            <small
+                                                class="text-muted">{{ $latestReview->reviewed_at?->format('d/m/Y H:i') }}</small>
                                         </div>
                                     @else
                                         <span class="text-muted">Sin revisión</span>
@@ -66,17 +79,21 @@
                                 </td>
                                 <td>
                                     <div class="d-flex gap-2 flex-wrap">
-                                        <a href="{{ route('tutor.exercises.show', $exercise) }}" class="btn btn-sm btn-success">
+                                        <a href="{{ route('tutor.exercises.show', $exercise) }}"
+                                           class="btn btn-sm btn-success">
                                             Ver ejercicio
                                         </a>
-                                        <a href="{{ route('tutor.exercises.reviews', $exercise) }}" class="btn btn-sm btn-outline-secondary">
+                                        <a href="{{ route('tutor.exercises.reviews', $exercise) }}"
+                                           class="btn btn-sm btn-outline-secondary">
                                             Ver revisiones
                                         </a>
                                         @if($exercise->status->name === 'Borrador')
-                                            <a href="{{ route('tutor.exercises.edit', $exercise) }}" class="btn btn-sm btn-primary">
+                                            <a href="{{ route('tutor.exercises.edit', $exercise) }}"
+                                               class="btn btn-sm btn-primary">
                                                 Editar
                                             </a>
-                                            <form action="{{ route('tutor.exercises.submitReview', $exercise) }}" method="POST">
+                                            <form action="{{ route('tutor.exercises.submitReview', $exercise) }}"
+                                                  method="POST">
                                                 @csrf
                                                 @method('PATCH')
                                                 <button type="submit" class="btn btn-sm btn-warning">

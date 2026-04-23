@@ -24,7 +24,6 @@ class TutorExerciseController extends Controller
     public function index(): View
     {
         $exercises = $this->exerciseService->getTutorExercises(auth()->id());
-
         return view('tutor.exercises.index', compact('exercises'));
     }
 
@@ -45,10 +44,17 @@ class TutorExerciseController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $this->validateExerciseRequest($request);
-        $this->exerciseService->createExercise($request, auth()->id());
+        $result = $this->exerciseService->createExercise($request, auth()->id());
+        $duplicates = $result['duplicates'];
+        $message = 'Ejercicio creado en borrador.';
+
+        if (!empty($duplicates)) {
+            $message .= ' Advertencia: se detectaron posibles ejercicios duplicados.';
+        }
         return redirect()
             ->route('tutor.exercises.index')
-            ->with('success', 'Ejercicio creado en borrador.');
+            ->with('success', $message)
+            ->with('duplicate_alerts', $duplicates);
     }
 
     public function submitReview(Exercise $exercise): RedirectResponse
@@ -100,11 +106,17 @@ class TutorExerciseController extends Controller
             abort(403, 'Solo puedes actualizar ejercicios en borrador.');
         }
         $this->validateExerciseRequest($request, true);
-        $this->exerciseService->updateExercise($request, $exercise, auth()->id());
+        $result = $this->exerciseService->updateExercise($request, $exercise, auth()->id());
+        $duplicates = $result['duplicates'];
+        $message = 'Ejercicio actualizado.';
 
+        if (!empty($duplicates)) {
+            $message .= ' Advertencia: se detectaron posibles ejercicios duplicados.';
+        }
         return redirect()
             ->route('tutor.exercises.index')
-            ->with('success', 'Ejercicio actualizado.');
+            ->with('success', $message)
+            ->with('duplicate_alerts', $duplicates);
     }
 
     public function show(Exercise $exercise): View
