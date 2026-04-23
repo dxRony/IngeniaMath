@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Login\LoginController;
 use App\Http\Controllers\Moderator\ModeratorDashboardController;
 use App\Http\Controllers\Register\RegisterController;
@@ -22,6 +23,10 @@ Route::middleware('guest')->group(function () {
 
 Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->name('logout');
 Route::view('/account-disabled', 'shared.account-disabled')->middleware('auth')->name('account.disabled');
+Route::middleware(['auth', 'active'])->group(function () {
+    Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+});
 
 // Admin
 Route::prefix('admin')->middleware(['auth', 'active', 'role:1'])->group(function () {
