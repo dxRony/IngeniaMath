@@ -124,6 +124,11 @@ class TutorExerciseController extends Controller
         return view('tutor.exercises.show', compact('exercise'));
     }
 
+    public function reviews(Exercise $exercise): View
+    {
+        return view('tutor.exercises.reviews', compact('exercise'));
+    }
+
     private function validateExerciseRequest(Request $request, bool $isUpdate = false): void
     {
         $request->validate([

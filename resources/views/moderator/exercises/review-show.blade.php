@@ -10,6 +10,7 @@
             ← Volver a la lista
         </a>
     </div>
+
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
@@ -18,6 +19,7 @@
             {{ $errors->first() }}
         </div>
     @endif
+
     <div class="card shadow-sm mb-4">
         <div class="card-body">
             <h4 class="fw-bold mb-3">Información general</h4>
@@ -46,9 +48,10 @@
             </div>
             <hr>
             <h5 class="fw-bold">Enunciado</h5>
-            <div class="border rounded p-3 bg-light mb-3">
-                {{ $exercise->statement }}
+            <div class="border rounded p-3 bg-light mb-3 math-content">
+                {!! nl2br(e($exercise->statement)) !!}
             </div>
+
             @if($exercise->image_url)
                 <div class="mb-3">
                     <h5 class="fw-bold">Imagen del ejercicio</h5>
@@ -60,14 +63,25 @@
                     >
                 </div>
             @endif
+
             <div class="mt-3">
                 <h5 class="fw-bold">Respuesta correcta</h5>
-                <div class="border rounded p-3 bg-light">
-                    {{ $exercise->correct_answer }}
+                <div class="border rounded p-3 bg-light math-content">
+                    {!! nl2br(e($exercise->correct_answer)) !!}
                 </div>
             </div>
+
+            @if(!empty($exercise->concept_explanation))
+                <div class="mt-3">
+                    <h5 class="fw-bold">Explicación conceptual</h5>
+                    <div class="border rounded p-3 bg-light math-content">
+                        {!! nl2br(e($exercise->concept_explanation)) !!}
+                    </div>
+                </div>
+            @endif
         </div>
     </div>
+
     @if($exercise->type->name === 'Opción múltiple')
         <div class="card shadow-sm mb-4">
             <div class="card-body">
@@ -81,8 +95,11 @@
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <strong>Opción {{ $option->order }}</strong>
-                                    <p class="mb-0 mt-1">{{ $option->option_text }}</p>
+                                    <div class="mb-0 mt-1 math-content">
+                                        {!! nl2br(e($option->option_text)) !!}
+                                    </div>
                                 </div>
+
                                 @if($option->is_correct)
                                     <span class="badge bg-success">Correcta</span>
                                 @endif
@@ -97,10 +114,14 @@
     <div class="card shadow-sm mb-4">
         <div class="card-body">
             <h4 class="fw-bold mb-3">Solución paso a paso</h4>
+
             @forelse($exercise->steps->sortBy('step_number') as $step)
                 <div class="border rounded p-3 mb-3">
                     <h6 class="fw-bold">Paso {{ $step->step_number }}</h6>
-                    <p class="mb-2">{{ $step->description }}</p>
+
+                    <div class="math-content">
+                        {!! nl2br(e($step->description)) !!}
+                    </div>
                     @if($step->image_url)
                         <div class="mt-2">
                             <img
@@ -117,17 +138,22 @@
             @endforelse
         </div>
     </div>
+
     @if($exercise->status->name === 'En revisión')
         <div class="card shadow-sm">
             <div class="card-body">
                 <h4 class="fw-bold mb-3">Revisión del ejercicio</h4>
+
                 <form action="{{ route('moderator.exercises.review.store', $exercise) }}" method="POST">
                     @csrf
                     <div class="mb-3">
                         <label class="form-label">Comentario</label>
-                        <textarea name="feedback" rows="4" class="form-control"
+                        <textarea name="feedback"
+                                  rows="4"
+                                  class="form-control"
                                   placeholder="Observaciones del revisor...">{{ old('feedback') }}</textarea>
                     </div>
+
                     <div class="d-flex gap-2">
                         <button type="submit" name="decision" value="approve" class="btn btn-success">
                             Aprobar ejercicio
@@ -136,6 +162,7 @@
                             Rechazar ejercicio
                         </button>
                     </div>
+
                     <small class="text-muted d-block mt-2">
                         Si rechazas el ejercicio, regresará a borrador para que el tutor lo corrija.
                     </small>

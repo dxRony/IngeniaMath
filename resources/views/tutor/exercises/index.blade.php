@@ -66,6 +66,12 @@
                                 </td>
                                 <td>
                                     <div class="d-flex gap-2 flex-wrap">
+                                        <a href="{{ route('tutor.exercises.show', $exercise) }}" class="btn btn-sm btn-success">
+                                            Ver ejercicio
+                                        </a>
+                                        <a href="{{ route('tutor.exercises.reviews', $exercise) }}" class="btn btn-sm btn-outline-secondary">
+                                            Ver revisiones
+                                        </a>
                                         @if($exercise->status->name === 'Borrador')
                                             <a href="{{ route('tutor.exercises.edit', $exercise) }}" class="btn btn-sm btn-primary">
                                                 Editar
@@ -78,9 +84,6 @@
                                                 </button>
                                             </form>
                                         @endif
-                                            <a href="{{ route('tutor.exercises.show', $exercise) }}" class="btn btn-sm btn-outline-secondary">
-                                                Historial de revisiones
-                                            </a>
                                     </div>
                                 </td>
                             </tr>
