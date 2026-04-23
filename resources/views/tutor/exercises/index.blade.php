@@ -7,7 +7,6 @@
             Nuevo ejercicio
         </a>
     </div>
-
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
@@ -27,25 +26,50 @@
                             <th>Nivel</th>
                             <th>Tipo</th>
                             <th>Estado</th>
-                            <th>Acciones</th>
+                            <th>Última revisión</th>
+                            <th style="text-align: center;">Acciones</th>
                         </tr>
                         </thead>
                         <tbody>
                         @foreach($exercises as $exercise)
+                            @php
+                                $latestReview = $exercise->reviews->sortByDesc('reviewed_at')->first();
+                            @endphp
                             <tr>
                                 <td>{{ $exercise->id }}</td>
                                 <td>{{ $exercise->subtopic->topic->name }}</td>
                                 <td>{{ $exercise->subtopic->name }}</td>
                                 <td>{{ $exercise->level->name }}</td>
                                 <td>{{ $exercise->type->name }}</td>
-                                <td>{{ $exercise->status->name }}</td>
                                 <td>
-                                    <div class="d-flex gap-2">
+                                    @if($exercise->status->name === 'Aprobado')
+                                        <span class="badge bg-success">Aprobado</span>
+                                    @elseif($exercise->status->name === 'En revisión')
+                                        <span class="badge bg-warning text-dark">En revisión</span>
+                                    @elseif($exercise->status->name === 'Borrador')
+                                        <span class="badge bg-secondary">Borrador</span>
+                                    @elseif($exercise->status->name === 'Publicado')
+                                        <span class="badge bg-primary">Publicado</span>
+                                    @else
+                                        <span class="badge bg-dark">{{ $exercise->status->name }}</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($latestReview)
+                                        <div>
+                                            <strong>{{ $latestReview->is_approved ? 'Aprobado' : 'Rechazado' }}</strong><br>
+                                            <small class="text-muted">{{ $latestReview->reviewed_at?->format('d/m/Y H:i') }}</small>
+                                        </div>
+                                    @else
+                                        <span class="text-muted">Sin revisión</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    <div class="d-flex gap-2 flex-wrap">
                                         @if($exercise->status->name === 'Borrador')
                                             <a href="{{ route('tutor.exercises.edit', $exercise) }}" class="btn btn-sm btn-primary">
                                                 Editar
                                             </a>
-
                                             <form action="{{ route('tutor.exercises.submitReview', $exercise) }}" method="POST">
                                                 @csrf
                                                 @method('PATCH')
@@ -53,9 +77,10 @@
                                                     Enviar a revisión
                                                 </button>
                                             </form>
-                                        @else
-                                            <span class="text-muted">Sin acciones</span>
                                         @endif
+                                            <a href="{{ route('tutor.exercises.show', $exercise) }}" class="btn btn-sm btn-outline-secondary">
+                                                Historial de revisiones
+                                            </a>
                                     </div>
                                 </td>
                             </tr>
