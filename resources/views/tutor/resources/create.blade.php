@@ -29,6 +29,28 @@
             border-radius: .25rem;
         }
         .file-icon { font-size: 3rem; line-height: 1; }
+
+        .flashcard-item {
+            border: 1px solid #dee2e6;
+            border-radius: .5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background: #fff;
+            position: relative;
+        }
+        .flashcard-number {
+            position: absolute;
+            top: .5rem;
+            left: .75rem;
+            font-size: .8rem;
+            color: #6c757d;
+            font-weight: 500;
+        }
+        .flashcard-remove {
+            position: absolute;
+            top: .5rem;
+            right: .5rem;
+        }
     </style>
 </head>
 <body class="bg-light">
@@ -72,11 +94,12 @@
                         </div>
                     @endif
 
-                    <form action="{{ route('tutor.resources.store') }}"
+                    <form id="resourceForm" action="{{ route('tutor.resources.store') }}"
                           method="POST"
                           enctype="multipart/form-data">
                         @csrf
 
+                        {{-- Campos comunes a todos los tipos --}}
                         <div class="mb-3">
                             <label class="form-label">Título <span class="text-danger">*</span></label>
                             <input type="text" name="title" class="form-control"
@@ -98,15 +121,10 @@
                                     <option value="{{ $type->id }}"
                                             data-is-flashcard="{{ $type->id == 3 ? '1' : '0' }}"
                                         {{ old('type_id') == $type->id ? 'selected' : '' }}>
-                                        {{ $type->name }}{{ $type->id == 3 ? ' (próximamente)' : '' }}
+                                        {{ $type->name }}
                                     </option>
                                 @endforeach
                             </select>
-
-                            <div id="flashcardWarning" class="alert alert-warning mt-2 d-none" role="alert">
-                                <strong>Atención:</strong> los recursos tipo <em>Flashcards</em> se crean desde
-                                una sección dedicada que aún no está disponible. Selecciona otro tipo por ahora.
-                            </div>
                         </div>
 
                         <div class="mb-3">
@@ -132,23 +150,41 @@
                             </select>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Archivo <span class="text-danger">*</span></label>
-                            <input type="file" id="fileInput" name="file" class="form-control"
-                                   accept=".mp4,.webm,.mov,.pdf,.html,.htm" required>
-                            <small class="text-muted">
-                                Formatos permitidos: mp4, webm, mov (videos), pdf (documentos), html (simuladores). Máximo 100 MB.
-                            </small>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Vista previa</label>
-                            <div id="previewBox" class="file-preview-box">
-                                <span class="file-icon text-muted">📄</span>
-                                <small class="text-muted mt-2">
-                                    Selecciona un archivo para ver la vista previa
+                        {{-- Sección para recursos con archivo (videos, PDFs, simuladores) --}}
+                        <div id="fileSection">
+                            <div class="mb-3">
+                                <label class="form-label">Archivo <span class="text-danger">*</span></label>
+                                <input type="file" id="fileInput" name="file" class="form-control"
+                                       accept=".mp4,.webm,.mov,.pdf,.html,.htm">
+                                <small class="text-muted">
+                                    Formatos permitidos: mp4, webm, mov (videos), pdf (documentos), html (simuladores). Máximo 100 MB.
                                 </small>
                             </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Vista previa</label>
+                                <div id="previewBox" class="file-preview-box">
+                                    <span class="file-icon text-muted">📄</span>
+                                    <small class="text-muted mt-2">
+                                        Selecciona un archivo para ver la vista previa
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Sección para flashcards (dinámica) --}}
+                        <div id="flashcardSection" style="display: none;">
+                            <hr>
+                            <h5 class="mb-3">Tarjetas del mazo</h5>
+                            <p class="text-muted small">
+                                Agrega las tarjetas que formarán este mazo. Cada tarjeta tiene un frente (la pregunta o concepto) y un reverso (la respuesta).
+                            </p>
+
+                            <div id="cardsContainer"></div>
+
+                            <button type="button" id="addCardBtn" class="btn btn-outline-primary w-100 mb-3">
+                                + Agregar tarjeta
+                            </button>
                         </div>
 
                         <div class="d-flex justify-content-between">
@@ -166,34 +202,68 @@
     </div>
 </div>
 
+{{-- Plantilla de tarjeta (no visible, se clona desde JS) --}}
+<template id="cardTemplate">
+    <div class="flashcard-item">
+        <span class="flashcard-number">Tarjeta #<span class="card-number">1</span></span>
+        <button type="button" class="btn btn-sm btn-outline-danger flashcard-remove remove-card-btn">
+            ✕
+        </button>
+        <div class="row mt-4">
+            <div class="col-md-6 mb-2">
+                <label class="form-label small">Frente <span class="text-danger">*</span></label>
+                <textarea class="form-control front-text" rows="3" maxlength="1000"
+                          placeholder="Pregunta, fórmula o concepto..."></textarea>
+            </div>
+            <div class="col-md-6 mb-2">
+                <label class="form-label small">Reverso <span class="text-danger">*</span></label>
+                <textarea class="form-control back-text" rows="3" maxlength="1000"
+                          placeholder="Respuesta o explicación..."></textarea>
+            </div>
+        </div>
+    </div>
+</template>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     const typeSelect = document.getElementById('type_id');
+    const fileSection = document.getElementById('fileSection');
     const fileInput = document.getElementById('fileInput');
     const previewBox = document.getElementById('previewBox');
-    const flashcardWarning = document.getElementById('flashcardWarning');
-    const submitBtn = document.getElementById('submitBtn');
+    const flashcardSection = document.getElementById('flashcardSection');
+    const cardsContainer = document.getElementById('cardsContainer');
+    const addCardBtn = document.getElementById('addCardBtn');
+    const cardTemplate = document.getElementById('cardTemplate');
+    const resourceForm = document.getElementById('resourceForm');
 
-    // Bloquea Flashcards porque aún no tiene interfaz
-    function updateFlashcardState() {
+    // =========================================================
+    // Cambio de tipo: mostrar/ocultar secciones
+    // =========================================================
+    function updateSections() {
         const selectedOption = typeSelect.options[typeSelect.selectedIndex];
         const isFlashcard = selectedOption && selectedOption.dataset.isFlashcard === '1';
 
         if (isFlashcard) {
-            flashcardWarning.classList.remove('d-none');
-            fileInput.disabled = true;
-            submitBtn.disabled = true;
+            fileSection.style.display = 'none';
+            flashcardSection.style.display = 'block';
+            fileInput.required = false;
+            // Si no hay tarjetas aún, agregamos una automáticamente
+            if (cardsContainer.children.length === 0) {
+                addCard();
+            }
         } else {
-            flashcardWarning.classList.add('d-none');
-            fileInput.disabled = false;
-            submitBtn.disabled = false;
+            fileSection.style.display = 'block';
+            flashcardSection.style.display = 'none';
+            fileInput.required = true;
         }
     }
 
-    typeSelect.addEventListener('change', updateFlashcardState);
-    updateFlashcardState();
+    typeSelect.addEventListener('change', updateSections);
+    updateSections(); // ejecutar al cargar
 
-    // Preview dinámico del archivo seleccionado
+    // =========================================================
+    // Preview del archivo
+    // =========================================================
     fileInput.addEventListener('change', function (e) {
         const file = e.target.files[0];
         previewBox.innerHTML = '';
@@ -233,6 +303,83 @@
         `;
 
         previewBox.innerHTML = previewHtml;
+    });
+
+    // =========================================================
+    // Gestión dinámica de tarjetas (flashcards)
+    // =========================================================
+    function addCard() {
+        const clone = cardTemplate.content.cloneNode(true);
+        cardsContainer.appendChild(clone);
+        renumberCards();
+    }
+
+    function removeCard(cardElement) {
+        cardElement.remove();
+        renumberCards();
+    }
+
+    function renumberCards() {
+        const cards = cardsContainer.querySelectorAll('.flashcard-item');
+        cards.forEach((card, index) => {
+            // Actualiza el número visible
+            const numberSpan = card.querySelector('.card-number');
+            numberSpan.textContent = index + 1;
+
+            // Actualiza los name attributes para que lleguen como cards[0], cards[1]...
+            const frontTextarea = card.querySelector('.front-text');
+            const backTextarea = card.querySelector('.back-text');
+            frontTextarea.name = `cards[${index}][front_text]`;
+            backTextarea.name = `cards[${index}][back_text]`;
+        });
+    }
+
+    addCardBtn.addEventListener('click', addCard);
+
+    // Delegación de eventos para el botón de eliminar
+    cardsContainer.addEventListener('click', function (e) {
+        if (e.target.classList.contains('remove-card-btn')) {
+            const cardElement = e.target.closest('.flashcard-item');
+            const totalCards = cardsContainer.querySelectorAll('.flashcard-item').length;
+
+            if (totalCards <= 1) {
+                alert('Debes tener al menos una tarjeta.');
+                return;
+            }
+
+            if (confirm('¿Eliminar esta tarjeta?')) {
+                removeCard(cardElement);
+            }
+        }
+    });
+
+    // =========================================================
+    // Validación antes de enviar
+    // =========================================================
+    resourceForm.addEventListener('submit', function (e) {
+        const isFlashcard = typeSelect.options[typeSelect.selectedIndex]?.dataset.isFlashcard === '1';
+
+        if (isFlashcard) {
+            const cards = cardsContainer.querySelectorAll('.flashcard-item');
+            if (cards.length === 0) {
+                e.preventDefault();
+                alert('Debes agregar al menos una tarjeta al mazo.');
+                return;
+            }
+
+            // Validar que todas las tarjetas tengan ambos campos llenos
+            let incomplete = false;
+            cards.forEach((card) => {
+                const front = card.querySelector('.front-text').value.trim();
+                const back = card.querySelector('.back-text').value.trim();
+                if (!front || !back) incomplete = true;
+            });
+
+            if (incomplete) {
+                e.preventDefault();
+                alert('Todas las tarjetas deben tener texto en el frente y en el reverso.');
+            }
+        }
     });
 </script>
 </body>

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Tutor\Resources;
 use App\Http\Controllers\Controller;
 use App\Models\ResourceType;
 use App\Models\Topic;
+use App\Services\Tutor\Resources\FlashcardDeckService;
 use App\Services\Tutor\Resources\ResourceService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -12,8 +13,12 @@ use Illuminate\View\View;
 
 class ResourceController extends Controller
 {
+    // ID del tipo "Flashcards" en la tabla resource_types
+    private const TYPE_FLASHCARDS = 3;
+
     public function __construct(
-        private ResourceService $resourceService
+        private ResourceService $resourceService,
+        private FlashcardDeckService $flashcardDeckService
     ) {}
 
     public function create(): View
@@ -28,41 +33,70 @@ class ResourceController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        // Flashcards tienen su propio flujo, no se crean desde este formulario
-        if ((int) $request->type_id === 3) {
-            return back()
-                ->withInput()
-                ->withErrors([
-                    'type_id' => 'Los recursos tipo "Flashcards" se crean desde su propia sección. Esta funcionalidad aún no está disponible.',
-                ]);
+        $isFlashcard = (int) $request->type_id === self::TYPE_FLASHCARDS;
+
+        if ($isFlashcard) {
+            return $this->storeFlashcardDeck($request);
         }
 
+        return $this->storeFileResource($request);
+    }
+
+    private function storeFileResource(Request $request): RedirectResponse
+    {
         $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string|max:2000',
-            'type_id' => 'required|exists:resource_types,id',
-            'subtopic_id' => 'required|exists:subtopics,id',
+            'title'        => 'required|string|max:255',
+            'description'  => 'nullable|string|max:2000',
+            'type_id'      => 'required|exists:resource_types,id',
+            'subtopic_id'  => 'required|exists:subtopics,id',
             'file' => [
                 'required',
                 'file',
-                'max:102400', // 100 MB en kilobytes
+                'max:102400', // 100 MB
                 'mimes:mp4,webm,mov,pdf,html,htm',
             ],
         ], [
-            'title.required' => 'El título es obligatorio.',
-            'type_id.required' => 'Debes seleccionar el tipo de recurso.',
-            'type_id.exists' => 'El tipo de recurso seleccionado no es válido.',
+            'title.required'       => 'El título es obligatorio.',
+            'type_id.required'     => 'Debes seleccionar el tipo de recurso.',
+            'type_id.exists'       => 'El tipo de recurso seleccionado no es válido.',
             'subtopic_id.required' => 'Debes seleccionar un subtema.',
-            'subtopic_id.exists' => 'El subtema seleccionado no es válido.',
-            'file.required' => 'Debes subir un archivo.',
-            'file.file' => 'El archivo no es válido.',
-            'file.max' => 'El archivo no puede superar los 100 MB.',
-            'file.mimes' => 'Formato no permitido. Usa mp4, webm, mov, pdf, html o htm.',
+            'subtopic_id.exists'   => 'El subtema seleccionado no es válido.',
+            'file.required'        => 'Debes subir un archivo.',
+            'file.file'            => 'El archivo no es válido.',
+            'file.max'             => 'El archivo no puede superar los 100 MB.',
+            'file.mimes'           => 'Formato no permitido. Usa mp4, webm, mov, pdf, html o htm.',
         ]);
 
         $this->resourceService->createResource($request);
 
         return redirect()->route('tutor.resources.create')
             ->with('success', 'Recurso enviado a revisión correctamente.');
+    }
+
+    private function storeFlashcardDeck(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'title'                => 'required|string|max:255',
+            'description'          => 'nullable|string|max:2000',
+            'subtopic_id'          => 'required|exists:subtopics,id',
+            'cards'                => 'required|array|min:1',
+            'cards.*.front_text'   => 'required|string|max:1000',
+            'cards.*.back_text'    => 'required|string|max:1000',
+        ], [
+            'title.required'              => 'El título del mazo es obligatorio.',
+            'subtopic_id.required'        => 'Debes seleccionar un subtema.',
+            'subtopic_id.exists'          => 'El subtema seleccionado no es válido.',
+            'cards.required'              => 'Debes agregar al menos una tarjeta.',
+            'cards.min'                   => 'Debes agregar al menos una tarjeta.',
+            'cards.*.front_text.required' => 'Cada tarjeta debe tener texto en el frente.',
+            'cards.*.front_text.max'      => 'El frente de cada tarjeta no puede superar los 1000 caracteres.',
+            'cards.*.back_text.required'  => 'Cada tarjeta debe tener texto en el reverso.',
+            'cards.*.back_text.max'       => 'El reverso de cada tarjeta no puede superar los 1000 caracteres.',
+        ]);
+
+        $this->flashcardDeckService->createDeck($request);
+
+        return redirect()->route('tutor.resources.create')
+            ->with('success', 'Mazo de flashcards enviado a revisión correctamente.');
     }
 }
