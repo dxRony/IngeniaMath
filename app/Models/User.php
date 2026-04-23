@@ -22,12 +22,18 @@ class User extends Authenticatable
         'email',
         'password',
         'is_active',
+        'profile_photo_url',
+        'phone_number',
+        'gender',
+        'birth_date',
+        'bio',
     ];
 
     protected function casts(): array
     {
         return [
             'is_active' => 'boolean',
+            'birth_date' => 'date',
         ];
     }
 

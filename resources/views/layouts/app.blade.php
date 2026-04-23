@@ -34,16 +34,23 @@
                 @endif
             @endauth
 
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item">
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <button type="submit" class="btn btn-link nav-link text-warning fw-bold">
-                            Logout
-                        </button>
-                    </form>
-                </li>
-            </ul>
+            @auth
+                <ul class="navbar-nav ms-auto align-items-lg-center">
+                    @if(auth()->user()->is_active)
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="{{ route('profile.show') }}">Mi perfil</a>
+                        </li>
+                    @endif
+                    <li class="nav-item">
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <button type="submit" class="btn btn-link nav-link text-warning fw-bold">
+                                Cerrar sesión
+                            </button>
+                        </form>
+                    </li>
+                </ul>
+            @endauth
 
         </div>
     </div>
