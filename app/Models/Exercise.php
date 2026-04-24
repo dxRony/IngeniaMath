@@ -21,6 +21,7 @@ class Exercise extends Model
         'statement',
         'image_url',
         'correct_answer',
+        'concept_explanation',
         'estimated_minutes',
         'created_by',
     ];

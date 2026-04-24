@@ -9,6 +9,7 @@ class ExerciseReview extends Model
 {
     protected $table = 'exercise_reviews';
 
+    public $timestamps = true;
 
     protected $fillable = [
         'exercise_id',
