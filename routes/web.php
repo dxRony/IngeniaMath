@@ -10,6 +10,10 @@ use App\Http\Controllers\Register\RegisterController;
 use App\Http\Controllers\Student\StudentDashboardController;
 use App\Http\Controllers\Tutor\TutorDashboardController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Forum\ForumController;
+use App\Http\Controllers\Forum\QuestionController;
+use App\Http\Controllers\Forum\QuestionReplyController;
+use App\Http\Controllers\Forum\ThreadController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -38,6 +42,7 @@ Route::view('/account-disabled', 'shared.account-disabled')->middleware('auth')-
 Route::middleware(['auth', 'active'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::get('/profiles/{user}', [ProfileController::class, 'showPublic'])->name('profile.public.show');
 });
 
 // Admin
@@ -50,14 +55,30 @@ Route::prefix('admin')->middleware(['auth', 'active', 'role:1'])->group(function
 // Moderator
 Route::prefix('moderator')->middleware(['auth', 'active', 'role:2'])->group(function () {
     Route::get('/dashboard', [ModeratorDashboardController::class, 'index'])->name('moderator.dashboard');
+    Route::resource('/forum', ForumController::class)->only(['index'])->name('index', 'moderator.forum.index');
+    Route::resource('/threads', ThreadController::class)->only(['show'])->name('show', 'moderator.threads.show');
+    Route::delete('/questions/{question}', [QuestionController::class, 'destroy'])->name('moderator.questions.destroy');
+    Route::delete('/question-replies/{reply}', [QuestionReplyController::class, 'destroy'])->name('moderator.question-replies.destroy');
+    Route::patch('/threads/{thread}/close', [ThreadController::class, 'closeThread'])->name('moderator.threads.close');
 });
 
 // Tutor
 Route::prefix('tutor')->middleware(['auth', 'active', 'role:3'])->group(function () {
     Route::get('/dashboard', [TutorDashboardController::class, 'index'])->name('tutor.dashboard');
+    Route::resource('/forum', ForumController::class)->only(['index'])->name('index', 'tutor.forum.index');
+    Route::resource('/threads', ThreadController::class)->only(['show'])->name('show', 'tutor.threads.show');
+    Route::post('/question-replies', [QuestionReplyController::class, 'store'])->name('tutor.question-replies.store');
 });
 
 // Student
 Route::prefix('student')->middleware(['auth', 'active', 'role:4'])->group(function () {
     Route::get('/dashboard', [StudentDashboardController::class, 'index'])->name('student.dashboard');
+    Route::resource('/forum', ForumController::class)->only(['index'])->name('index', 'student.forum.index');
+    Route::resource('/threads', ThreadController::class)->only(['create', 'store', 'show'])->names([
+        'create' => 'student.threads.create',
+        'store' => 'student.threads.store',
+        'show' => 'student.threads.show',
+    ]);
+    Route::post('/questions', [QuestionController::class, 'store'])->name('student.questions.store');
+    Route::patch('/question-replies/{reply}/accept', [QuestionReplyController::class, 'acceptReply'])->name('student.question-replies.accept');
 });
