@@ -50,11 +50,11 @@ default => 'layouts.app',
                     @if ($roleId === 4)
                     <div class="col-12 col-md-auto">
                         <div class="form-check form-switch pt-md-3">
-                            <label class="form-check-label fw-semibold" for="myThreadsFilter">
-                                Mostrar solo mis hilos
-                            </label>
                             <input type="checkbox" class="form-check-input" id="myThreadsFilter" name="my_threads"
                                 value="1" {{ $showMyThreads ? 'checked' : '' }}>
+                            <label class="form-check-label fw-semibold" for="myThreadsFilter">
+                                <i class="bi bi-person me-1"></i> Mostrar solo mis hilos
+                            </label>
                         </div>
                     </div>
                     @endif
@@ -81,30 +81,28 @@ default => 'layouts.app',
     (() => {
     const filterForm = document.getElementById('forumFilterForm');
     const filterSelect = document.getElementById('topicFilter');
-    const myThreadsCheckbox = document.getElementById('myThreadsFilter');
+    const myThreadsCheckbox = document.getElementById('myThreadsFilter'); // Puede ser null
     const clearButton = document.getElementById('clearTopicFilter');
     const cardsContainer = document.getElementById('threadCardsContainer');
     const paginationContainer = document.getElementById('threadPaginationContainer');
 
-    if (!filterForm || !filterSelect || !clearButton || !cardsContainer || !paginationContainer || !myThreadsCheckbox) {
+    // Solo validar elementos obligatorios
+    if (!filterForm || !filterSelect || !clearButton || !cardsContainer || !paginationContainer) {
+        console.error('Elementos obligatorios no encontrados');
         return;
     }
 
     let controller = null;
 
     const fetchFilteredThreads = async (targetUrl = null) => {
-        if (controller) {
-            controller.abort();
-        }
-
+        if (controller) controller.abort();
         controller = new AbortController();
 
         const formData = new FormData(filterForm);
 
-        // Asegurarse de que el checkbox se incluya correctamente
-        if (myThreadsCheckbox.checked) {
+        if (myThreadsCheckbox?.checked) {
             formData.set('my_threads', '1');
-        } else {
+        } else if (myThreadsCheckbox) {
             formData.delete('my_threads');
         }
 
@@ -122,46 +120,33 @@ default => 'layouts.app',
                 signal: controller.signal,
             });
 
-            if (!response.ok) {
-                return;
-            }
+            if (!response.ok) return;
 
             const data = await response.json();
-
             cardsContainer.innerHTML = data.threadsHtml ?? '';
             paginationContainer.innerHTML = data.paginationHtml ?? '';
             window.history.replaceState({}, '', requestUrl);
         } catch (error) {
-            if (error.name !== 'AbortError') {
-                console.error(error);
-            }
+            if (error.name !== 'AbortError') console.error(error);
         }
     };
 
     // Event listeners
-    filterSelect.addEventListener('change', () => {
-        fetchFilteredThreads();
-    });
-
-    myThreadsCheckbox.addEventListener('change', () => {
-        fetchFilteredThreads();
-    });
+    filterSelect.addEventListener('change', () => fetchFilteredThreads());
+    myThreadsCheckbox?.addEventListener('change', () => fetchFilteredThreads());
 
     clearButton.addEventListener('click', () => {
         filterSelect.value = '';
-        myThreadsCheckbox.checked = false;
+        if (myThreadsCheckbox) myThreadsCheckbox.checked = false;
         fetchFilteredThreads();
     });
 
     paginationContainer.addEventListener('click', (event) => {
         const link = event.target.closest('a');
-
-        if (!link) {
-            return;
+        if (link) {
+            event.preventDefault();
+            fetchFilteredThreads(link.href);
         }
-
-        event.preventDefault();
-        fetchFilteredThreads(link.href);
     });
 })();
 </script>
