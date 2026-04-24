@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Tutor\Resources;
 
 use App\Http\Controllers\Controller;
+use App\Models\EducationalResource;
 use App\Models\ResourceType;
 use App\Models\Topic;
 use App\Services\Tutor\Resources\FlashcardDeckService;
@@ -20,11 +21,60 @@ class ResourceController extends Controller
     private const TYPE_FLASHCARDS = 3;
     private const TYPE_SIMULATOR = 4;
 
+    // IDs de estados en la tabla resource_statuses
+    private const STATUS_PENDING = 1;
+    private const STATUS_APPROVED = 2;
+    private const STATUS_REJECTED = 3;
+    private const STATUS_DELETED = 4;
+
     public function __construct(
         private ResourceService $resourceService,
         private FlashcardDeckService $flashcardDeckService,
         private SimulatorService $simulatorService
     ) {}
+
+    /**
+     * Listado de recursos del tutor autenticado, con filtros por estado.
+     */
+    public function index(Request $request): View
+    {
+        $statusFilter = $request->query('status'); // pending|approved|rejected|deleted|null
+
+        $query = EducationalResource::with(['type', 'status', 'subtopics.topic'])
+            ->where('created_by', auth()->id());
+
+        // Filtro por estado
+        match ($statusFilter) {
+            'pending'  => $query->where('status_id', self::STATUS_PENDING),
+            'approved' => $query->where('status_id', self::STATUS_APPROVED),
+            'rejected' => $query->where('status_id', self::STATUS_REJECTED),
+            'deleted'  => $query->where('status_id', self::STATUS_DELETED),
+            default    => $query->whereIn('status_id', [
+                self::STATUS_PENDING,
+                self::STATUS_APPROVED,
+                self::STATUS_REJECTED,
+            ]),
+        };
+
+        $resources = $query->latest()->paginate(10);
+
+        // Conteos para los tabs de filtros
+        $baseQuery = EducationalResource::where('created_by', auth()->id());
+
+        $counts = [
+            'all'      => (clone $baseQuery)->whereIn('status_id', [
+                self::STATUS_PENDING,
+                self::STATUS_APPROVED,
+                self::STATUS_REJECTED,
+            ])->count(),
+            'pending'  => (clone $baseQuery)->where('status_id', self::STATUS_PENDING)->count(),
+            'approved' => (clone $baseQuery)->where('status_id', self::STATUS_APPROVED)->count(),
+            'rejected' => (clone $baseQuery)->where('status_id', self::STATUS_REJECTED)->count(),
+            'deleted'  => (clone $baseQuery)->where('status_id', self::STATUS_DELETED)->count(),
+        ];
+
+        return view('tutor.resources.index', compact('resources', 'statusFilter', 'counts'));
+    }
 
     public function create(): View
     {
@@ -43,8 +93,27 @@ class ResourceController extends Controller
         return match ($typeId) {
             self::TYPE_FLASHCARDS => $this->storeFlashcardDeck($request),
             self::TYPE_SIMULATOR  => $this->storeSimulator($request),
-            default                => $this->storeFileResource($request),
+            default               => $this->storeFileResource($request),
         };
+    }
+
+    /**
+     * DEBUG: lista todos los recursos para verificación visual.
+     * Eliminar antes del merge a develop.
+     */
+    public function debug(): View
+    {
+        $resources = EducationalResource::with([
+            'type',
+            'status',
+            'subtopics.topic',
+            'flashcards',
+            'creator',
+        ])
+            ->latest()
+            ->get();
+
+        return view('tutor.resources.debug', compact('resources'));
     }
 
     private function storeFileResource(Request $request): RedirectResponse
@@ -74,7 +143,7 @@ class ResourceController extends Controller
 
         $this->resourceService->createResource($request);
 
-        return redirect()->route('tutor.resources.create')
+        return redirect()->route('tutor.resources.index')
             ->with('success', 'Recurso enviado a revisión correctamente.');
     }
 
@@ -101,7 +170,7 @@ class ResourceController extends Controller
 
         $this->flashcardDeckService->createDeck($request);
 
-        return redirect()->route('tutor.resources.create')
+        return redirect()->route('tutor.resources.index')
             ->with('success', 'Mazo de flashcards enviado a revisión correctamente.');
     }
 
@@ -122,8 +191,7 @@ class ResourceController extends Controller
 
         $this->simulatorService->createSimulator($request);
 
-        return redirect()->route('tutor.resources.create')
+        return redirect()->route('tutor.resources.index')
             ->with('success', 'Simulador enviado a revisión correctamente.');
     }
-
 }

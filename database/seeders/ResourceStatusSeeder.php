@@ -17,6 +17,7 @@ class ResourceStatusSeeder extends Seeder
             ['name' => 'Pendiente de revisión'],
             ['name' => 'Aprobado'],
             ['name' => 'Rechazado'],
+            ['name' => 'Eliminado'],
         ];
 
         DB::table('resource_statuses')->insert($status);

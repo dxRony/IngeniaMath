@@ -56,4 +56,9 @@ class EducationalResource extends Model
     {
         return $this->hasMany(Flashcard::class, 'resource_id', 'id');
     }
+
+    public function latestReview(): HasOne
+    {
+        return $this->hasOne(ResourceReview::class, 'resource_id', 'id')->latestOfMany();
+    }
 }
