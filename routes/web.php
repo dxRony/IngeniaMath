@@ -40,6 +40,7 @@ Route::prefix('tutor')->middleware(['auth', 'role:3'])->group(function () {
     Route::prefix('resources')->name('tutor.resources.')->group(function () {
         Route::get('/create', [ResourceController::class, 'create'])->name('create');
         Route::post('/', [ResourceController::class, 'store'])->name('store');
+
     });
 });
 

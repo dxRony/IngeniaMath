@@ -18,6 +18,7 @@ class EducationalResource extends Model
         'title',
         'description',
         'url',
+        'simulator_state',
         'created_by',
     ];
 

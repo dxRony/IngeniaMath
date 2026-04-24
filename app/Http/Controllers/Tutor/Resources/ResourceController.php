@@ -7,18 +7,23 @@ use App\Models\ResourceType;
 use App\Models\Topic;
 use App\Services\Tutor\Resources\FlashcardDeckService;
 use App\Services\Tutor\Resources\ResourceService;
+use App\Services\Tutor\Resources\SimulatorService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class ResourceController extends Controller
 {
-    // ID del tipo "Flashcards" en la tabla resource_types
+    // IDs de tipos en la tabla resource_types
+    private const TYPE_VIDEO = 1;
+    private const TYPE_PDF = 2;
     private const TYPE_FLASHCARDS = 3;
+    private const TYPE_SIMULATOR = 4;
 
     public function __construct(
         private ResourceService $resourceService,
-        private FlashcardDeckService $flashcardDeckService
+        private FlashcardDeckService $flashcardDeckService,
+        private SimulatorService $simulatorService
     ) {}
 
     public function create(): View
@@ -33,13 +38,13 @@ class ResourceController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $isFlashcard = (int) $request->type_id === self::TYPE_FLASHCARDS;
+        $typeId = (int) $request->type_id;
 
-        if ($isFlashcard) {
-            return $this->storeFlashcardDeck($request);
-        }
-
-        return $this->storeFileResource($request);
+        return match ($typeId) {
+            self::TYPE_FLASHCARDS => $this->storeFlashcardDeck($request),
+            self::TYPE_SIMULATOR  => $this->storeSimulator($request),
+            default                => $this->storeFileResource($request),
+        };
     }
 
     private function storeFileResource(Request $request): RedirectResponse
@@ -52,8 +57,8 @@ class ResourceController extends Controller
             'file' => [
                 'required',
                 'file',
-                'max:102400', // 100 MB
-                'mimes:mp4,webm,mov,pdf,html,htm',
+                'max:102400',
+                'mimes:mp4,webm,mov,pdf',
             ],
         ], [
             'title.required'       => 'El título es obligatorio.',
@@ -64,7 +69,7 @@ class ResourceController extends Controller
             'file.required'        => 'Debes subir un archivo.',
             'file.file'            => 'El archivo no es válido.',
             'file.max'             => 'El archivo no puede superar los 100 MB.',
-            'file.mimes'           => 'Formato no permitido. Usa mp4, webm, mov, pdf, html o htm.',
+            'file.mimes'           => 'Formato no permitido. Usa mp4, webm, mov o pdf.',
         ]);
 
         $this->resourceService->createResource($request);
@@ -99,4 +104,26 @@ class ResourceController extends Controller
         return redirect()->route('tutor.resources.create')
             ->with('success', 'Mazo de flashcards enviado a revisión correctamente.');
     }
+
+    private function storeSimulator(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'title'           => 'required|string|max:255',
+            'description'     => 'nullable|string|max:2000',
+            'subtopic_id'     => 'required|exists:subtopics,id',
+            'simulator_state' => 'required|string|min:10',
+        ], [
+            'title.required'           => 'El título es obligatorio.',
+            'subtopic_id.required'     => 'Debes seleccionar un subtema.',
+            'subtopic_id.exists'       => 'El subtema seleccionado no es válido.',
+            'simulator_state.required' => 'Debes crear la construcción en el editor antes de enviar.',
+            'simulator_state.min'      => 'La construcción del simulador está vacía o es inválida.',
+        ]);
+
+        $this->simulatorService->createSimulator($request);
+
+        return redirect()->route('tutor.resources.create')
+            ->with('success', 'Simulador enviado a revisión correctamente.');
+    }
+
 }
