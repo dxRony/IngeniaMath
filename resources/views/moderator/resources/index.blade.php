@@ -1,10 +1,6 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Revisión de recursos - IngeniaMath</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+@extends('moderator.main')
+
+@section('content')
     <style>
         .resource-row { transition: background .15s; }
         .resource-row:hover { background: #f8f9fa; cursor: pointer; }
@@ -28,20 +24,6 @@
             font-size: 1rem;
         }
     </style>
-</head>
-<body class="bg-light">
-
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
-    <div class="container">
-        <a class="navbar-brand" href="{{ route('moderator.dashboard') }}">IngeniaMath - Moderador</a>
-        <form action="{{ route('logout') }}" method="POST" class="d-inline">
-            @csrf
-            <button class="btn btn-outline-light btn-sm" type="submit">Cerrar sesión</button>
-        </form>
-    </div>
-</nav>
-
-<div class="container pb-5">
 
     @if (session('success'))
         <div class="alert alert-success alert-dismissible fade show">
@@ -55,7 +37,6 @@
         <small class="text-muted">Aprueba o rechaza los recursos subidos por los tutores</small>
     </div>
 
-    {{-- Filtros por estado --}}
     <ul class="nav nav-pills mb-3">
         <li class="nav-item">
             <a class="nav-link {{ $statusFilter === 'pending' ? 'active' : '' }}"
@@ -77,7 +58,6 @@
         </li>
     </ul>
 
-    {{-- Listado --}}
     <div class="card shadow-sm">
         <div class="card-body p-0">
             @if ($resources->count() > 0)
@@ -100,15 +80,15 @@
                             <tr class="resource-row"
                                 onclick="window.location='{{ route('moderator.resources.show', $resource->id) }}'">
                                 <td>
-                                        <span class="type-icon">
-                                            @switch($resource->type_id)
-                                                @case(1) 🎬 @break
-                                                @case(2) 📄 @break
-                                                @case(3) 🃏 @break
-                                                @case(4) 📐 @break
-                                                @default 📎
-                                            @endswitch
-                                        </span>
+                                    <span class="type-icon">
+                                        @switch($resource->type_id)
+                                            @case(1) 🎬 @break
+                                            @case(2) 📄 @break
+                                            @case(3) 🃏 @break
+                                            @case(4) 📐 @break
+                                            @default 📎
+                                        @endswitch
+                                    </span>
                                 </td>
                                 <td><strong>{{ $resource->title }}</strong></td>
                                 <td><small>{{ $resource->type?->name }}</small></td>
@@ -126,9 +106,9 @@
                                     </small>
                                 </td>
                                 <td>
-                                        <span class="status-badge status-{{ $resource->status_id }}">
-                                            {{ $resource->status?->name }}
-                                        </span>
+                                    <span class="status-badge status-{{ $resource->status_id }}">
+                                        {{ $resource->status?->name }}
+                                    </span>
                                 </td>
                                 <td>
                                     <small class="text-muted">
@@ -162,15 +142,9 @@
         </div>
     </div>
 
-    {{-- Paginación --}}
     @if ($resources->hasPages())
         <div class="mt-3 d-flex justify-content-center">
             {{ $resources->appends(request()->query())->links() }}
         </div>
     @endif
-
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+@endsection
