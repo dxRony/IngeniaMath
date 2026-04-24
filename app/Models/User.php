@@ -8,11 +8,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, SoftDeletes;
 
     protected $fillable = [
         'role_id',
@@ -21,12 +22,18 @@ class User extends Authenticatable
         'email',
         'password',
         'is_active',
+        'profile_photo_url',
+        'phone_number',
+        'gender',
+        'birth_date',
+        'bio',
     ];
 
     protected function casts(): array
     {
         return [
             'is_active' => 'boolean',
+            'birth_date' => 'date',
         ];
     }
 

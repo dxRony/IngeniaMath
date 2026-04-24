@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('image_url', 255)->nullable();
             $table->text('correct_answer');
             $table->integer('estimated_minutes');
-
+            $table->text('concept_explanation');
             $table->foreignId('subtopic_id')->constrained('subtopics')->cascadeOnDelete();
             $table->foreignId('level_id')->constrained('exercise_levels')->cascadeOnDelete();
             $table->foreignId('type_id')->constrained('exercise_types')->cascadeOnDelete();

@@ -48,4 +48,18 @@ class Topic extends Model
     {
         return $this->hasMany(ExamTopicDistribution::class, 'topic_id', 'id');
     }
+
+    public function getForumBorderClassAttribute(): string
+    {
+        return match ((int) $this->id) {
+            1 => 'border-primary',
+            2 => 'border-success',
+            3 => 'border-warning',
+            4 => 'border-info',
+            5 => 'border-danger',
+            6 => 'border-secondary',
+            7 => 'border-dark',
+            default => 'border-light',
+        };
+    }
 }
