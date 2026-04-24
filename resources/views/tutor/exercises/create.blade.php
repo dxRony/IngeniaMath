@@ -25,11 +25,10 @@
                             <option value="{{ $topic->id }}">{{ $topic->name }}</option>
                         @endforeach
                     </select>
-                    <small class="text-muted">Solo para filtrar subtemas</small>
                 </div>
 
                 <div class="col-md-6">
-                    <label class="form-label">Subtema</label>
+                    <label class="form-label">Subtema*</label>
                     <select name="subtopic_id" id="subtopic_id" class="form-select" required>
                         <option value="">Seleccione un subtema</option>
                         @foreach($subtopics as $subtopic)
@@ -41,7 +40,7 @@
                 </div>
 
                 <div class="col-md-6">
-                    <label class="form-label">Nivel</label>
+                    <label class="form-label">Nivel*</label>
                     <select name="level_id" class="form-select" required>
                         <option value="">Seleccione un nivel</option>
                         @foreach($levels as $level)
@@ -51,7 +50,7 @@
                 </div>
 
                 <div class="col-md-6">
-                    <label class="form-label">Tipo</label>
+                    <label class="form-label">Tipo*</label>
                     <select name="type_id" id="type_id" class="form-select" required>
                         <option value="">Seleccione un tipo</option>
                         @foreach($types as $type)
@@ -63,11 +62,8 @@
                 </div>
 
                 <div class="col-12">
-                    <label class="form-label">Enunciado</label>
+                    <label class="form-label">Enunciado*</label>
                     <textarea name="statement" rows="4" class="form-control" required>{{ old('statement') }}</textarea>
-                    <small class="text-muted">
-                        Aquí luego podrán renderizar expresiones matemáticas con MathJax o KaTeX.
-                    </small>
                 </div>
 
                 <div class="col-12">
@@ -78,12 +74,12 @@
 
                 {{-- respuesta numerica abierta--}}
                 <div class="col-md-6" id="generic-answer-section">
-                    <label class="form-label">Respuesta correcta</label>
+                    <label class="form-label">Respuesta correcta*</label>
                     <input type="text"
                            name="correct_answer"
                            id="correct_answer"
                            class="form-control"
-                           value="{{ old('correct_answer') }}">
+                           value="{{ old('correct_answer') }}" required>
                     <small class="text-muted" id="correct-answer-help">
                         Escribe la respuesta correcta del ejercicio.
                     </small>
@@ -104,7 +100,7 @@
                 </div>
 
                 <div class="col-md-6">
-                    <label class="form-label">Tiempo estimado (minutos)</label>
+                    <label class="form-label">Tiempo estimado (minutos)*</label>
                     <input type="number"
                            name="estimated_minutes"
                            class="form-control"
@@ -114,8 +110,8 @@
                 </div>
 
                 <div class="col-12">
-                    <label class="form-label">Explicación conceptual del tema relacionado</label>
-                    <textarea name="concept_explanation" rows="4" class="form-control">{{ old('concept_explanation') }}</textarea>
+                    <label class="form-label">Explicación conceptual del tema relacionado*</label>
+                    <textarea name="concept_explanation" rows="4" class="form-control" required>{{ old('concept_explanation') }}</textarea>
                     <small class="text-muted">
                         Explica el concepto matemático detrás del ejercicio.
                     </small>
@@ -346,6 +342,7 @@
                     <textarea name="steps[${i}][description]" rows="2" class="form-control mb-2"></textarea>
 
                     <label class="form-label">Imagen del paso</label>
+                    <small class="text-muted">Opcional</small>
                     <input type="file" name="steps[${i}][image_file]" class="form-control" accept="image/*">
                 </div>
             `;
