@@ -51,6 +51,13 @@ Route::prefix('tutor')->middleware(['auth', 'role:3'])->group(function () {
         Route::get('/create',          [ResourceController::class, 'create'])->name('create');
         Route::post('/',               [ResourceController::class, 'store'])->name('store');
 
+        // Edicion
+        Route::get('/{id}/edit',       [ResourceController::class, 'edit'])->name('edit')->whereNumber('id');
+        Route::put('/{id}',            [ResourceController::class, 'update'])->name('update')->whereNumber('id');
+
+        // Eliminacion (cambia a status 4)
+        Route::delete('/{id}',         [\App\Http\Controllers\Tutor\Resources\ResourceController::class, 'destroy'])->name('destroy')->whereNumber('id');
+
 
     });
 });

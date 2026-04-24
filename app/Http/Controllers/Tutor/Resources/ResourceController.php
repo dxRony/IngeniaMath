@@ -194,4 +194,155 @@ class ResourceController extends Controller
         return redirect()->route('tutor.resources.index')
             ->with('success', 'Simulador enviado a revisión correctamente.');
     }
+    /**
+     * Muestra el formulario de edición de un recurso.
+     */
+    public function edit(int $id): View
+    {
+        $resource = EducationalResource::with([
+            'subtopics',
+            'flashcards' => function ($q) {
+                $q->orderBy('order');
+            },
+            'latestReview.reviewer',
+        ])->findOrFail($id);
+
+        // Solo el dueño puede editar
+        if ($resource->created_by !== auth()->id()) {
+            abort(403, 'No tienes permiso para editar este recurso.');
+        }
+
+        // No se puede editar un recurso eliminado
+        if ($resource->status_id === self::STATUS_DELETED) {
+            return redirect()->route('tutor.resources.index')
+                ->withErrors(['status' => 'No puedes editar un recurso eliminado.']);
+        }
+
+        $types = ResourceType::orderBy('name')->get();
+        $topics = Topic::with(['subtopics' => function ($query) {
+            $query->orderBy('order');
+        }])->orderBy('order')->get();
+
+        return view('tutor.resources.edit', compact('resource', 'types', 'topics'));
+    }
+
+    /**
+     * Procesa la actualización de un recurso.
+     * Delega al service correcto según el tipo.
+     */
+    public function update(Request $request, int $id): RedirectResponse
+    {
+        $resource = EducationalResource::findOrFail($id);
+
+        // Solo el dueño puede editar
+        if ($resource->created_by !== auth()->id()) {
+            abort(403);
+        }
+
+        if ($resource->status_id === self::STATUS_DELETED) {
+            return redirect()->route('tutor.resources.index')
+                ->withErrors(['status' => 'No puedes editar un recurso eliminado.']);
+        }
+
+        return match ((int) $resource->type_id) {
+            self::TYPE_FLASHCARDS => $this->updateFlashcardDeck($request, $resource),
+            self::TYPE_SIMULATOR  => $this->updateSimulator($request, $resource),
+            default               => $this->updateFileResource($request, $resource),
+        };
+    }
+
+    private function updateFileResource(Request $request, EducationalResource $resource): RedirectResponse
+    {
+        $request->validate([
+            'title'        => 'required|string|max:255',
+            'description'  => 'nullable|string|max:2000',
+            'subtopic_id'  => 'required|exists:subtopics,id',
+            'file' => [
+                'nullable', // en edición el archivo es opcional (si no se sube, se mantiene el existente)
+                'file',
+                'max:102400',
+                'mimes:mp4,webm,mov,pdf',
+            ],
+        ], [
+            'title.required'       => 'El título es obligatorio.',
+            'subtopic_id.required' => 'Debes seleccionar un subtema.',
+            'subtopic_id.exists'   => 'El subtema seleccionado no es válido.',
+            'file.max'             => 'El archivo no puede superar los 100 MB.',
+            'file.mimes'           => 'Formato no permitido. Usa mp4, webm, mov o pdf.',
+        ]);
+
+        $this->resourceService->updateResource($request, $resource);
+
+        return redirect()->route('tutor.resources.index')
+            ->with('success', 'Recurso actualizado y enviado a revisión.');
+    }
+
+    private function updateFlashcardDeck(Request $request, EducationalResource $resource): RedirectResponse
+    {
+        $request->validate([
+            'title'                => 'required|string|max:255',
+            'description'          => 'nullable|string|max:2000',
+            'subtopic_id'          => 'required|exists:subtopics,id',
+            'cards'                => 'required|array|min:1',
+            'cards.*.front_text'   => 'required|string|max:1000',
+            'cards.*.back_text'    => 'required|string|max:1000',
+        ], [
+            'title.required'              => 'El título del mazo es obligatorio.',
+            'subtopic_id.required'        => 'Debes seleccionar un subtema.',
+            'cards.required'              => 'Debes tener al menos una tarjeta.',
+            'cards.min'                   => 'Debes tener al menos una tarjeta.',
+            'cards.*.front_text.required' => 'Cada tarjeta debe tener texto en el frente.',
+            'cards.*.back_text.required'  => 'Cada tarjeta debe tener texto en el reverso.',
+        ]);
+
+        $this->flashcardDeckService->updateDeck($request, $resource);
+
+        return redirect()->route('tutor.resources.index')
+            ->with('success', 'Mazo actualizado y enviado a revisión.');
+    }
+
+    private function updateSimulator(Request $request, EducationalResource $resource): RedirectResponse
+    {
+        $request->validate([
+            'title'           => 'required|string|max:255',
+            'description'     => 'nullable|string|max:2000',
+            'subtopic_id'     => 'required|exists:subtopics,id',
+            'simulator_state' => 'nullable|string|min:10',
+        ], [
+            'title.required'       => 'El título es obligatorio.',
+            'subtopic_id.required' => 'Debes seleccionar un subtema.',
+            'simulator_state.min'  => 'La construcción del simulador está vacía o es inválida.',
+        ]);
+
+        $this->simulatorService->updateSimulator($request, $resource);
+
+        return redirect()->route('tutor.resources.index')
+            ->with('success', 'Simulador actualizado y enviado a revisión.');
+    }
+
+    /**
+     * "Elimina" un recurso cambiando su status_id a 4 (Eliminado).
+     * No borra físicamente, preserva el histórico.
+     */
+    public function destroy(int $id): RedirectResponse
+    {
+        $resource = EducationalResource::findOrFail($id);
+
+        // Solo el dueño puede eliminar
+        if ($resource->created_by !== auth()->id()) {
+            abort(403);
+        }
+
+        // Evitar "eliminar dos veces"
+        if ($resource->status_id === self::STATUS_DELETED) {
+            return redirect()->route('tutor.resources.index')
+                ->withErrors(['status' => 'Este recurso ya estaba eliminado.']);
+        }
+
+        $this->resourceService->softDelete($resource);
+
+        return redirect()->route('tutor.resources.index')
+            ->with('success', 'Recurso eliminado correctamente.');
+    }
+
 }

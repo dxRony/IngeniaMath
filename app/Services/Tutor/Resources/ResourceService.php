@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Storage;
 
 class ResourceService
 {
-    // Estado inicial: "Pendiente de revisión" (id = 1)
+    // Estado "Pendiente de revisión"
     private const STATUS_PENDING_REVIEW = 1;
 
     // Carpeta base dentro de storage/app/public/
@@ -18,44 +18,95 @@ class ResourceService
 
     public function createResource(Request $request): EducationalResource
     {
-        // 1. Subimos primero el archivo. Si falla, ni tocamos la BD.
         $file = $request->file('file');
         $typeFolder = $this->resolveTypeFolder((int) $request->type_id);
 
-        // Laravel genera un nombre único automáticamente
         $storedPath = $file->store(
             self::STORAGE_FOLDER . '/' . $typeFolder,
             'public'
         );
 
-        // 2. Insertamos en BD dentro de una transacción
         try {
             return DB::transaction(function () use ($request, $storedPath) {
                 $resource = EducationalResource::create([
                     'title'       => trim($request->title),
                     'description' => $request->description ? trim($request->description) : null,
-                    'url'         => $storedPath, // guardamos la ruta local aquí
+                    'url'         => $storedPath,
                     'type_id'     => $request->type_id,
                     'status_id'   => self::STATUS_PENDING_REVIEW,
                     'created_by'  => Auth::id(),
                 ]);
 
-                // Un solo subtema aunque la tabla sea pivote (enfoque rápido)
                 $resource->subtopics()->attach($request->subtopic_id);
 
                 return $resource;
             });
         } catch (\Throwable $e) {
-            // Si la BD falla, borramos el archivo huérfano
             Storage::disk('public')->delete($storedPath);
             throw $e;
         }
     }
 
     /**
-     * Devuelve la subcarpeta según el tipo de recurso.
-     * 1 = Videos, 2 = PDFs, 3 = Flashcards, 4 = Simuladores
+     * Actualiza un recurso de archivo (video/PDF).
+     * Si se envía un archivo nuevo, se reemplaza el anterior.
+     * El recurso vuelve a estado "Pendiente de revisión".
      */
+    public function updateResource(Request $request, EducationalResource $resource): EducationalResource
+    {
+        $newStoredPath = null;
+        $oldPath = $resource->url;
+
+        if ($request->hasFile('file')) {
+            $typeFolder = $this->resolveTypeFolder((int) $resource->type_id);
+            $newStoredPath = $request->file('file')->store(
+                self::STORAGE_FOLDER . '/' . $typeFolder,
+                'public'
+            );
+        }
+
+        try {
+            $updatedResource = DB::transaction(function () use ($request, $resource, $newStoredPath) {
+                $data = [
+                    'title'       => trim($request->title),
+                    'description' => $request->description ? trim($request->description) : null,
+                    'status_id'   => self::STATUS_PENDING_REVIEW,
+                ];
+
+                if ($newStoredPath !== null) {
+                    $data['url'] = $newStoredPath;
+                }
+
+                $resource->update($data);
+                $resource->subtopics()->sync([$request->subtopic_id]);
+
+                return $resource->fresh();
+            });
+
+            // Éxito: borramos el archivo viejo si fue reemplazado
+            if ($newStoredPath !== null && $oldPath) {
+                Storage::disk('public')->delete($oldPath);
+            }
+
+            return $updatedResource;
+        } catch (\Throwable $e) {
+            if ($newStoredPath !== null) {
+                Storage::disk('public')->delete($newStoredPath);
+            }
+            throw $e;
+        }
+    }
+
+
+    /**
+     * Marca un recurso como "Eliminado" (status_id = 4).
+     * No borra físicamente: mantiene el histórico.
+     */
+    public function softDelete(EducationalResource $resource): void
+    {
+        $resource->update(['status_id' => 4]);
+    }
+
     private function resolveTypeFolder(int $typeId): string
     {
         return match ($typeId) {

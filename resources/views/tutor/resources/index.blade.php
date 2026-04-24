@@ -51,6 +51,12 @@
         </div>
     @endif
 
+    @if ($errors->any())
+        <div class="alert alert-danger">
+            {{ $errors->first() }}
+        </div>
+    @endif
+
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
             <h3 class="mb-0">Mis recursos educativos</h3>
@@ -156,9 +162,22 @@
                                 </td>
                                 <td>
                                     @if ($resource->status_id !== 4)
-                                        <a href="#" class="btn btn-sm btn-outline-primary" title="Editar (próximamente)">
-                                            Editar
-                                        </a>
+                                        <div class="d-flex gap-1">
+                                            <a href="{{ route('tutor.resources.edit', $resource->id) }}"
+                                               class="btn btn-sm btn-outline-primary">
+                                                Editar
+                                            </a>
+                                            <form action="{{ route('tutor.resources.destroy', $resource->id) }}"
+                                                  method="POST"
+                                                  class="d-inline"
+                                                  onsubmit="return confirm('¿Eliminar este recurso? Ya no será visible ni se podrá editar.')">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                    Eliminar
+                                                </button>
+                                            </form>
+                                        </div>
                                     @else
                                         <span class="text-muted small">—</span>
                                     @endif
