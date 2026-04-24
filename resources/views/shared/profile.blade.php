@@ -196,6 +196,7 @@ $profilePhoto = asset('img/default_pp.png');
 
                 <div class="card-footer bg-white d-flex justify-content-end px-4 px-lg-5 py-3">
                     <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                    <a href="{{ route('profile.public.show', $user->id) }}" class="btn btn-success ms-2">Ver perfil público</a>
                 </div>
             </form>
         </div>

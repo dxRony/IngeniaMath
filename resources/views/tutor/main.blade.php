@@ -20,4 +20,9 @@
             <li><a class="dropdown-item" href="{{route('tutor.exercises.index')}}">Ver mis ejercicios</a></li>
         </ul>
     </li>
+    <li class="nav-item">
+      <a class="nav-link text-white" href="{{ route('tutor.forum.index') }}">
+          Foro
+      </a>
+    </li>
 @endsection

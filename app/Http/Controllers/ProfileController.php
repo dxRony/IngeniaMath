@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use App\Http\Requests\UpdateProfileRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -15,6 +16,15 @@ class ProfileController extends Controller
     {
         return view('shared.profile', [
             'user' => Auth::user(),
+        ]);
+    }
+
+    public function showPublic(User $user): View
+    {
+        $user->loadMissing('role');
+
+        return view('shared.profile-show', [
+            'user' => $user,
         ]);
     }
 

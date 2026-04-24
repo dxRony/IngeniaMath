@@ -4,9 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class QuestionReply extends Model
 {
+    use SoftDeletes;
+
     protected $table = 'question_replies';
 
 
@@ -16,14 +19,12 @@ class QuestionReply extends Model
         'resource_url',
         'created_by',
         'is_accepted',
-        'is_deleted',
     ];
 
     protected function casts(): array
     {
         return [
             'is_accepted' => 'boolean',
-            'is_deleted' => 'boolean',
         ];
     }
 

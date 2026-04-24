@@ -19,4 +19,9 @@
             <li><a class="dropdown-item" href="{{route('moderator.exercises.review.index')}}">Revisar ejercicios</a></li>
         </ul>
     </li>
+    <li class="nav-item">
+      <a class="nav-link text-white" href="{{ route('moderator.forum.index') }}">
+          Foro
+      </a>
+    </li>
 @endsection
