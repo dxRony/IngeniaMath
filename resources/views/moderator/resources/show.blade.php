@@ -1,11 +1,6 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $resource->title }} - Revisión - IngeniaMath</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://www.geogebra.org/apps/deployggb.js"></script>
+@extends('moderator.main')
+
+@section('content')
     <style>
         .status-badge {
             font-size: .8rem;
@@ -64,20 +59,6 @@
         .review-history-item.approved { border-left-color: #198754; }
         .review-history-item.rejected { border-left-color: #dc3545; }
     </style>
-</head>
-<body class="bg-light">
-
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
-    <div class="container">
-        <a class="navbar-brand" href="{{ route('moderator.dashboard') }}">IngeniaMath - Moderador</a>
-        <form action="{{ route('logout') }}" method="POST" class="d-inline">
-            @csrf
-            <button class="btn btn-outline-light btn-sm" type="submit">Cerrar sesión</button>
-        </form>
-    </div>
-</nav>
-
-<div class="container pb-5">
 
     <a href="{{ route('moderator.resources.index') }}" class="btn btn-sm btn-outline-secondary mb-3">
         ← Volver al listado
@@ -90,7 +71,6 @@
     @endif
 
     <div class="row">
-        {{-- Columna izquierda: detalles + contenido --}}
         <div class="col-lg-8">
             <div class="card shadow-sm mb-4">
                 <div class="card-body">
@@ -125,11 +105,9 @@
 
                     <hr>
 
-                    {{-- Renderizado del contenido según el tipo --}}
                     <h5 class="mb-3">Contenido</h5>
 
                     @if ($resource->type_id === 1)
-                        {{-- VIDEO --}}
                         @if ($resource->url)
                             <video controls style="max-width: 100%;">
                                 <source src="{{ asset('storage/' . $resource->url) }}">
@@ -140,7 +118,6 @@
                         @endif
 
                     @elseif ($resource->type_id === 2)
-                        {{-- PDF --}}
                         @if ($resource->url)
                             <iframe src="{{ asset('storage/' . $resource->url) }}"
                                     style="width: 100%; height: 600px; border: 1px solid #dee2e6; border-radius: .25rem;"></iframe>
@@ -149,7 +126,6 @@
                         @endif
 
                     @elseif ($resource->type_id === 3)
-                        {{-- FLASHCARDS --}}
                         <p class="small text-muted">
                             {{ $resource->flashcards->count() }} tarjeta(s). Haz clic en cada una para voltear.
                         </p>
@@ -166,28 +142,8 @@
                         @endforelse
 
                     @elseif ($resource->type_id === 4)
-                        {{-- SIMULADOR --}}
                         @if ($resource->simulator_state)
                             <div id="ggbApplet" class="ggb-container"></div>
-                            <script>
-                                document.addEventListener('DOMContentLoaded', function() {
-                                    const params = {
-                                        appName: 'classic',
-                                        width: 700,
-                                        height: 450,
-                                        showToolBar: false,
-                                        showMenuBar: false,
-                                        showAlgebraInput: false,
-                                        showResetIcon: true,
-                                        enableShiftDragZoom: true,
-                                        enableRightClick: false,
-                                        language: 'es',
-                                        ggbBase64: @json($resource->simulator_state),
-                                    };
-                                    const app = new GGBApplet(params, true);
-                                    app.inject('ggbApplet');
-                                });
-                            </script>
                         @else
                             <div class="alert alert-danger">Simulador sin estado guardado.</div>
                         @endif
@@ -197,7 +153,6 @@
                 </div>
             </div>
 
-            {{-- Historial de revisiones previas --}}
             @if ($resource->reviews->count() > 0)
                 <div class="card shadow-sm">
                     <div class="card-header bg-white">
@@ -207,7 +162,7 @@
                         @foreach ($resource->reviews->sortByDesc('reviewed_at') as $review)
                             <div class="review-history-item {{ $review->is_approved ? 'approved' : 'rejected' }}">
                                 <small>
-                                    <strong>{{ $review->is_approved ? ' Aprobado' : '  Rechazado' }}</strong>
+                                    <strong>{{ $review->is_approved ? '✓ Aprobado' : '✗ Rechazado' }}</strong>
                                     por {{ $review->reviewer?->first_name }} {{ $review->reviewer?->last_name }}
                                     • {{ $review->reviewed_at?->format('d/m/Y H:i') }}
                                 </small>
@@ -221,17 +176,14 @@
             @endif
         </div>
 
-        {{-- Columna derecha: acciones de aprobación/rechazo --}}
         <div class="col-lg-4">
             @if ($resource->status_id === 1)
-                {{-- Solo mostrar botones si está pendiente --}}
                 <div class="card shadow-sm sticky-top" style="top: 1rem;">
                     <div class="card-header bg-white">
                         <h6 class="mb-0">Acciones de revisión</h6>
                     </div>
                     <div class="card-body">
 
-                        {{-- Aprobar --}}
                         <form action="{{ route('moderator.resources.approve', $resource->id) }}" method="POST" class="mb-3">
                             @csrf
                             <label class="form-label small">Comentario (opcional)</label>
@@ -245,7 +197,6 @@
 
                         <hr>
 
-                        {{-- Rechazar --}}
                         <form action="{{ route('moderator.resources.reject', $resource->id) }}" method="POST">
                             @csrf
                             <label class="form-label small">Motivo del rechazo (opcional)</label>
@@ -260,7 +211,6 @@
                     </div>
                 </div>
             @else
-                {{-- Si ya fue aprobado o rechazado, solo mostrar info --}}
                 <div class="card shadow-sm">
                     <div class="card-body text-center">
                         <p class="mb-2">Este recurso ya fue revisado.</p>
@@ -272,18 +222,39 @@
             @endif
         </div>
     </div>
-</div>
+@endsection
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-    function toggleCard(el) {
-        const current = el.querySelector('.card-content').textContent;
-        const front = el.dataset.front;
-        const back = el.dataset.back;
-        el.querySelector('.card-content').textContent = current === front ? back : front;
-        el.style.background = current === front ? '#e7f3ff' : '#fff';
-    }
-</script>
+@section('scripts')
+    @if ($resource->type_id === 4 && $resource->simulator_state)
+        <script src="https://www.geogebra.org/apps/deployggb.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const params = {
+                    appName: 'classic',
+                    width: 700,
+                    height: 450,
+                    showToolBar: false,
+                    showMenuBar: false,
+                    showAlgebraInput: false,
+                    showResetIcon: true,
+                    enableShiftDragZoom: true,
+                    enableRightClick: false,
+                    language: 'es',
+                    ggbBase64: @json($resource->simulator_state),
+                };
+                const app = new GGBApplet(params, true);
+                app.inject('ggbApplet');
+            });
+        </script>
+    @endif
 
-</body>
-</html>
+    <script>
+        function toggleCard(el) {
+            const current = el.querySelector('.card-content').textContent;
+            const front = el.dataset.front;
+            const back = el.dataset.back;
+            el.querySelector('.card-content').textContent = current === front ? back : front;
+            el.style.background = current === front ? '#e7f3ff' : '#fff';
+        }
+    </script>
+@endsection

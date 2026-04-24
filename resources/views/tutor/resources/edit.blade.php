@@ -1,10 +1,6 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar recurso - IngeniaMath</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+@extends('tutor.main')
+
+@section('content')
     <style>
         .file-preview-box {
             border: 2px dashed #dee2e6;
@@ -66,7 +62,6 @@
             margin-bottom: 1rem;
             font-size: .9rem;
         }
-
         .current-file-box {
             background: #e9ecef;
             padding: .75rem;
@@ -74,20 +69,6 @@
             font-size: .9rem;
         }
     </style>
-</head>
-<body class="bg-light">
-
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
-    <div class="container">
-        <a class="navbar-brand" href="{{ route('tutor.dashboard') }}">IngeniaMath - Tutor</a>
-        <form action="{{ route('logout') }}" method="POST" class="d-inline">
-            @csrf
-            <button class="btn btn-outline-light btn-sm" type="submit">Cerrar sesión</button>
-        </form>
-    </div>
-</nav>
-
-<div class="container pb-5">
 
     <a href="{{ route('tutor.resources.index') }}" class="btn btn-sm btn-outline-secondary mb-3">
         ← Volver al listado
@@ -96,7 +77,6 @@
     <div class="row justify-content-center">
         <div class="col-lg-10">
 
-            {{-- Si el recurso fue rechazado, mostrar el motivo --}}
             @if ($resource->status_id === 3 && $resource->latestReview && !$resource->latestReview->is_approved)
                 <div class="alert alert-danger">
                     <strong>Este recurso fue rechazado.</strong>
@@ -113,7 +93,6 @@
                 </div>
             @endif
 
-            {{-- Si el recurso era Aprobado, avisar que se bajará a pendiente --}}
             @if ($resource->status_id === 2)
                 <div class="alert alert-warning">
                     <strong>Atención:</strong> este recurso está actualmente <strong>Aprobado</strong> y visible para los estudiantes.
@@ -147,7 +126,6 @@
                         @csrf
                         @method('PUT')
 
-                        {{-- Input hidden para el simulador --}}
                         <input type="hidden" id="simulatorStateInput" name="simulator_state" value="">
 
                         <div class="mb-3">
@@ -189,7 +167,6 @@
                             </select>
                         </div>
 
-                        {{-- TIPO 1 y 2: Video / PDF --}}
                         @if ($resource->type_id === 1 || $resource->type_id === 2)
                             <div class="mb-3">
                                 <label class="form-label">Archivo actual</label>
@@ -208,23 +185,18 @@
                                 <label class="form-label">Reemplazar archivo (opcional)</label>
                                 <input type="file" id="fileInput" name="file" class="form-control"
                                        accept=".mp4,.webm,.mov,.pdf">
-                                <small class="text-muted">
-                                    Deja este campo vacío si no quieres cambiar el archivo.
-                                </small>
+                                <small class="text-muted">Deja este campo vacío si no quieres cambiar el archivo.</small>
                             </div>
 
                             <div class="mb-3">
                                 <label class="form-label">Vista previa del nuevo archivo</label>
                                 <div id="previewBox" class="file-preview-box">
                                     <span class="file-icon text-muted">📄</span>
-                                    <small class="text-muted mt-2">
-                                        No hay archivo nuevo seleccionado
-                                    </small>
+                                    <small class="text-muted mt-2">No hay archivo nuevo seleccionado</small>
                                 </div>
                             </div>
                         @endif
 
-                        {{-- TIPO 3: Flashcards --}}
                         @if ($resource->type_id === 3)
                             <hr>
                             <h5 class="mb-3">Tarjetas del mazo</h5>
@@ -260,17 +232,14 @@
                             </button>
                         @endif
 
-                        {{-- TIPO 4: Simulador --}}
                         @if ($resource->type_id === 4)
                             <hr>
                             <h5 class="mb-3">Editor de simulador</h5>
-
                             <div class="simulator-help">
                                 <strong>💡 Instrucciones:</strong> el simulador actual ya está cargado en el editor.
                                 Puedes modificar la construcción o dejarla como está.
                                 Al guardar, la nueva versión reemplazará la anterior.
                             </div>
-
                             <div id="ggbApplet" class="simulator-editor"></div>
                         @endif
 
@@ -287,192 +256,177 @@
             </div>
         </div>
     </div>
-</div>
 
-{{-- Plantilla de tarjeta (para agregar dinámicamente) --}}
-<template id="cardTemplate">
-    <div class="flashcard-item">
-        <span class="flashcard-number">Tarjeta #<span class="card-number">1</span></span>
-        <button type="button" class="btn btn-sm btn-outline-danger flashcard-remove remove-card-btn">
-            ✕
-        </button>
-        <div class="row mt-4">
-            <div class="col-md-6 mb-2">
-                <label class="form-label small">Frente <span class="text-danger">*</span></label>
-                <textarea class="form-control front-text" rows="3" maxlength="1000"
-                          placeholder="Pregunta, fórmula o concepto..."></textarea>
-            </div>
-            <div class="col-md-6 mb-2">
-                <label class="form-label small">Reverso <span class="text-danger">*</span></label>
-                <textarea class="form-control back-text" rows="3" maxlength="1000"
-                          placeholder="Respuesta o explicación..."></textarea>
+    <template id="cardTemplate">
+        <div class="flashcard-item">
+            <span class="flashcard-number">Tarjeta #<span class="card-number">1</span></span>
+            <button type="button" class="btn btn-sm btn-outline-danger flashcard-remove remove-card-btn">
+                ✕
+            </button>
+            <div class="row mt-4">
+                <div class="col-md-6 mb-2">
+                    <label class="form-label small">Frente <span class="text-danger">*</span></label>
+                    <textarea class="form-control front-text" rows="3" maxlength="1000"
+                              placeholder="Pregunta, fórmula o concepto..."></textarea>
+                </div>
+                <div class="col-md-6 mb-2">
+                    <label class="form-label small">Reverso <span class="text-danger">*</span></label>
+                    <textarea class="form-control back-text" rows="3" maxlength="1000"
+                              placeholder="Respuesta o explicación..."></textarea>
+                </div>
             </div>
         </div>
-    </div>
-</template>
+    </template>
+@endsection
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-@if ($resource->type_id === 4)
-    <script src="https://www.geogebra.org/apps/deployggb.js"></script>
-@endif
+@section('scripts')
+    @if ($resource->type_id === 4)
+        <script src="https://www.geogebra.org/apps/deployggb.js"></script>
+    @endif
 
-<script>
-    const TYPE_ID = {{ $resource->type_id }};
-    const fileInput = document.getElementById('fileInput');
-    const previewBox = document.getElementById('previewBox');
-    const resourceForm = document.getElementById('resourceForm');
+    <script>
+        const TYPE_ID = {{ $resource->type_id }};
+        const fileInput = document.getElementById('fileInput');
+        const previewBox = document.getElementById('previewBox');
+        const resourceForm = document.getElementById('resourceForm');
 
-    // =========================================================
-    // Preview de archivo (solo para tipos 1 y 2)
-    // =========================================================
-    if (fileInput) {
-        fileInput.addEventListener('change', function (e) {
-            const file = e.target.files[0];
-            previewBox.innerHTML = '';
-            previewBox.classList.remove('has-file');
+        if (fileInput) {
+            fileInput.addEventListener('change', function (e) {
+                const file = e.target.files[0];
+                previewBox.innerHTML = '';
+                previewBox.classList.remove('has-file');
 
-            if (!file) {
-                previewBox.innerHTML = `
-                    <span class="file-icon text-muted">📄</span>
-                    <small class="text-muted mt-2">No hay archivo nuevo seleccionado</small>
+                if (!file) {
+                    previewBox.innerHTML = `
+                        <span class="file-icon text-muted">📄</span>
+                        <small class="text-muted mt-2">No hay archivo nuevo seleccionado</small>
+                    `;
+                    return;
+                }
+
+                previewBox.classList.add('has-file');
+                const url = URL.createObjectURL(file);
+                const mime = file.type;
+                const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+
+                let previewHtml = '';
+                if (mime.startsWith('video/')) {
+                    previewHtml = `<video src="${url}" controls></video>`;
+                } else if (mime === 'application/pdf') {
+                    previewHtml = `<iframe src="${url}" style="width:100%; height:300px;"></iframe>`;
+                } else {
+                    previewHtml = `<span class="file-icon">📎</span>`;
+                }
+
+                previewHtml += `
+                    <div class="mt-2 small">
+                        <strong>${file.name}</strong><br>
+                        <span class="text-muted">${sizeMB} MB • ${mime || 'tipo desconocido'}</span>
+                    </div>
                 `;
-                return;
-            }
-
-            previewBox.classList.add('has-file');
-            const url = URL.createObjectURL(file);
-            const mime = file.type;
-            const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
-
-            let previewHtml = '';
-            if (mime.startsWith('video/')) {
-                previewHtml = `<video src="${url}" controls></video>`;
-            } else if (mime === 'application/pdf') {
-                previewHtml = `<iframe src="${url}" style="width:100%; height:300px;"></iframe>`;
-            } else {
-                previewHtml = `<span class="file-icon">📎</span>`;
-            }
-
-            previewHtml += `
-                <div class="mt-2 small">
-                    <strong>${file.name}</strong><br>
-                    <span class="text-muted">${sizeMB} MB • ${mime || 'tipo desconocido'}</span>
-                </div>
-            `;
-            previewBox.innerHTML = previewHtml;
-        });
-    }
-
-    // =========================================================
-    // Gestión dinámica de flashcards (tipo 3)
-    // =========================================================
-    const cardsContainer = document.getElementById('cardsContainer');
-    const addCardBtn = document.getElementById('addCardBtn');
-    const cardTemplate = document.getElementById('cardTemplate');
-
-    if (cardsContainer && addCardBtn) {
-        function addCard() {
-            const clone = cardTemplate.content.cloneNode(true);
-            cardsContainer.appendChild(clone);
-            renumberCards();
-        }
-
-        function removeCard(cardElement) {
-            cardElement.remove();
-            renumberCards();
-        }
-
-        function renumberCards() {
-            const cards = cardsContainer.querySelectorAll('.flashcard-item');
-            cards.forEach((card, index) => {
-                card.querySelector('.card-number').textContent = index + 1;
-                card.querySelector('.front-text').name = `cards[${index}][front_text]`;
-                card.querySelector('.back-text').name = `cards[${index}][back_text]`;
+                previewBox.innerHTML = previewHtml;
             });
         }
 
-        addCardBtn.addEventListener('click', addCard);
+        const cardsContainer = document.getElementById('cardsContainer');
+        const addCardBtn = document.getElementById('addCardBtn');
+        const cardTemplate = document.getElementById('cardTemplate');
 
-        cardsContainer.addEventListener('click', function (e) {
-            if (e.target.classList.contains('remove-card-btn')) {
-                const cardElement = e.target.closest('.flashcard-item');
-                const totalCards = cardsContainer.querySelectorAll('.flashcard-item').length;
+        if (cardsContainer && addCardBtn) {
+            function addCard() {
+                const clone = cardTemplate.content.cloneNode(true);
+                cardsContainer.appendChild(clone);
+                renumberCards();
+            }
 
-                if (totalCards <= 1) {
+            function removeCard(cardElement) {
+                cardElement.remove();
+                renumberCards();
+            }
+
+            function renumberCards() {
+                const cards = cardsContainer.querySelectorAll('.flashcard-item');
+                cards.forEach((card, index) => {
+                    card.querySelector('.card-number').textContent = index + 1;
+                    card.querySelector('.front-text').name = `cards[${index}][front_text]`;
+                    card.querySelector('.back-text').name = `cards[${index}][back_text]`;
+                });
+            }
+
+            addCardBtn.addEventListener('click', addCard);
+
+            cardsContainer.addEventListener('click', function (e) {
+                if (e.target.classList.contains('remove-card-btn')) {
+                    const cardElement = e.target.closest('.flashcard-item');
+                    const totalCards = cardsContainer.querySelectorAll('.flashcard-item').length;
+
+                    if (totalCards <= 1) {
+                        alert('Debes tener al menos una tarjeta.');
+                        return;
+                    }
+                    if (confirm('¿Eliminar esta tarjeta?')) {
+                        removeCard(cardElement);
+                    }
+                }
+            });
+        }
+
+        let ggbApplet = null;
+
+        if (TYPE_ID === 4) {
+            const params = {
+                appName: 'classic',
+                width: 900,
+                height: 500,
+                showToolBar: true,
+                showAlgebraInput: true,
+                showMenuBar: false,
+                showResetIcon: true,
+                enableShiftDragZoom: true,
+                enableRightClick: true,
+                language: 'es',
+                ggbBase64: @json($resource->simulator_state ?? ''),
+                appletOnLoad: function(api) {
+                    ggbApplet = api;
+                }
+            };
+
+            const applet = new GGBApplet(params, true);
+            applet.inject('ggbApplet');
+        }
+
+        resourceForm.addEventListener('submit', function (e) {
+            if (TYPE_ID === 3) {
+                const cards = cardsContainer.querySelectorAll('.flashcard-item');
+                if (cards.length === 0) {
+                    e.preventDefault();
                     alert('Debes tener al menos una tarjeta.');
                     return;
                 }
-                if (confirm('¿Eliminar esta tarjeta?')) {
-                    removeCard(cardElement);
+
+                let incomplete = false;
+                cards.forEach((card) => {
+                    const front = card.querySelector('.front-text').value.trim();
+                    const back = card.querySelector('.back-text').value.trim();
+                    if (!front || !back) incomplete = true;
+                });
+
+                if (incomplete) {
+                    e.preventDefault();
+                    alert('Todas las tarjetas deben tener texto en el frente y en el reverso.');
+                }
+            } else if (TYPE_ID === 4) {
+                if (!ggbApplet) {
+                    e.preventDefault();
+                    alert('El editor aún no se ha cargado. Espera unos segundos.');
+                    return;
+                }
+
+                const state = ggbApplet.getBase64();
+                if (state && state.length >= 10) {
+                    document.getElementById('simulatorStateInput').value = state;
                 }
             }
         });
-    }
-
-    // =========================================================
-    // Simulador GeoGebra (tipo 4)
-    // =========================================================
-    let ggbApplet = null;
-
-    if (TYPE_ID === 4) {
-        const params = {
-            appName: 'classic',
-            width: 900,
-            height: 500,
-            showToolBar: true,
-            showAlgebraInput: true,
-            showMenuBar: false,
-            showResetIcon: true,
-            enableShiftDragZoom: true,
-            enableRightClick: true,
-            language: 'es',
-            ggbBase64: @json($resource->simulator_state ?? ''),
-            appletOnLoad: function(api) {
-                ggbApplet = api;
-            }
-        };
-
-        const applet = new GGBApplet(params, true);
-        applet.inject('ggbApplet');
-    }
-
-    // =========================================================
-    // Validación y captura del simulador antes de enviar
-    // =========================================================
-    resourceForm.addEventListener('submit', function (e) {
-        if (TYPE_ID === 3) {
-            const cards = cardsContainer.querySelectorAll('.flashcard-item');
-            if (cards.length === 0) {
-                e.preventDefault();
-                alert('Debes tener al menos una tarjeta.');
-                return;
-            }
-
-            let incomplete = false;
-            cards.forEach((card) => {
-                const front = card.querySelector('.front-text').value.trim();
-                const back = card.querySelector('.back-text').value.trim();
-                if (!front || !back) incomplete = true;
-            });
-
-            if (incomplete) {
-                e.preventDefault();
-                alert('Todas las tarjetas deben tener texto en el frente y en el reverso.');
-            }
-        } else if (TYPE_ID === 4) {
-            if (!ggbApplet) {
-                e.preventDefault();
-                alert('El editor aún no se ha cargado. Espera unos segundos.');
-                return;
-            }
-
-            const state = ggbApplet.getBase64();
-            if (state && state.length >= 10) {
-                document.getElementById('simulatorStateInput').value = state;
-            }
-
-        }
-    });
-</script>
-</body>
-</html>
+    </script>
+@endsection
