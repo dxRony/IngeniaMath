@@ -114,7 +114,7 @@
                            name="correct_answer"
                            id="correct_answer"
                            class="form-control"
-                           value="{{ old('correct_answer', in_array($exercise->type->name, ['Verdadero/Falso', 'Completar espacios']) ? '' : $exercise->correct_answer) }}" required>
+                           value="{{ old('correct_answer', in_array($exercise->type->name, ['Verdadero/Falso', 'Completar espacios']) ? '' : $exercise->correct_answer) }}">
                     <small class="text-muted" id="correct-answer-help">
                         Escribe la respuesta correcta del ejercicio.
                     </small>
@@ -123,7 +123,7 @@
                 {{-- V/F --}}
                 <div class="col-md-6 d-none" id="true-false-section">
                     <label class="form-label">Respuesta correcta (Verdadero/Falso)</label>
-                    <select name="true_false_answer" class="form-select">
+                    <select name="true_false_answer" id="true_false_answer" class="form-select">
                         <option value="">Seleccione una opción</option>
                         <option value="Verdadero" {{ $trueFalseAnswer === 'Verdadero' ? 'selected' : '' }}>Verdadero
                         </option>
@@ -196,6 +196,7 @@
                         <label class="form-label">Cantidad de espacios</label>
                         <input type="number"
                                id="blank_count"
+                               name="blank_count"
                                class="form-control"
                                min="1"
                                max="10"
@@ -327,46 +328,91 @@
             const selectedOption = typeSelect.options[typeSelect.selectedIndex];
             const selectedName = selectedOption?.dataset.name ?? '';
 
+            const trueFalseAnswer = document.getElementById('true_false_answer');
+            const optionInputs = document.querySelectorAll('input[name^="options"]');
+            const correctOptionInputs = document.querySelectorAll('input[name="correct_option"]');
+
             multipleChoiceSection.classList.add('d-none');
             trueFalseSection.classList.add('d-none');
             fillBlankSection.classList.add('d-none');
-            genericAnswerSection.classList.remove('d-none');
+            genericAnswerSection.classList.add('d-none');
 
-            correctAnswerInput.placeholder = '';
-            correctAnswerHelp.textContent = 'Escribe la respuesta correcta del ejercicio.';
+            correctAnswerInput.required = false;
+            correctAnswerInput.disabled = true;
+
+            if (trueFalseAnswer) {
+                trueFalseAnswer.required = false;
+                trueFalseAnswer.disabled = true;
+            }
+
+            optionInputs.forEach(input => {
+                input.required = false;
+                input.disabled = true;
+            });
+
+            correctOptionInputs.forEach(input => {
+                input.required = false;
+                input.disabled = true;
+            });
+
+            fillBlankAnswersContainer.innerHTML = '';
 
             if (selectedName === 'Opción múltiple') {
                 multipleChoiceSection.classList.remove('d-none');
-                correctAnswerHelp.textContent = 'Este campo puede usarse como referencia interna; la opción marcada será la válida.';
+
+                optionInputs.forEach(input => {
+                    input.required = true;
+                    input.disabled = false;
+                });
+
+                correctOptionInputs.forEach(input => {
+                    input.required = true;
+                    input.disabled = false;
+                });
+
             } else if (selectedName === 'Verdadero/Falso') {
                 trueFalseSection.classList.remove('d-none');
-                genericAnswerSection.classList.add('d-none');
+
+                if (trueFalseAnswer) {
+                    trueFalseAnswer.required = true;
+                    trueFalseAnswer.disabled = false;
+                }
+
             } else if (selectedName === 'Respuesta numérica abierta') {
                 genericAnswerSection.classList.remove('d-none');
+                correctAnswerInput.disabled = false;
+                correctAnswerInput.required = true;
                 correctAnswerHelp.textContent = 'Ingresa la respuesta numérica correcta.';
+
             } else if (selectedName === 'Completar espacios') {
                 fillBlankSection.classList.remove('d-none');
-                genericAnswerSection.classList.add('d-none');
+                renderFillBlankAnswers(parseInt(blankCountInput?.value || 1), true);
+
+            } else {
+                genericAnswerSection.classList.remove('d-none');
+                correctAnswerInput.disabled = false;
+                correctAnswerInput.required = true;
             }
         }
 
         typeSelect.addEventListener('change', updateTypeSections);
 
-        function renderFillBlankAnswers(blankCount) {
+        function renderFillBlankAnswers(blankCount, enabled = false) {
             fillBlankAnswersContainer.innerHTML = '';
 
             for (let i = 0; i < blankCount; i++) {
                 const value = initialBlankAnswers[i] ?? '';
 
                 const html = `
-                <div class="border rounded p-3 mb-3">
-                    <label class="form-label">Respuesta del espacio ${i + 1}</label>
-                    <input type="text"
-                           name="blank_answers[${i}]"
-                           class="form-control"
-                           value="${value}">
-                </div>
-            `;
+            <div class="border rounded p-3 mb-3">
+                <label class="form-label">Respuesta del espacio ${i + 1}</label>
+                <input type="text"
+                       name="blank_answers[${i}]"
+                       class="form-control"
+                       value="${value}"
+                       ${enabled ? 'required' : 'disabled'}>
+            </div>
+        `;
 
                 fillBlankAnswersContainer.insertAdjacentHTML('beforeend', html);
             }
@@ -379,7 +425,7 @@
                 if (isNaN(count) || count < 1) count = 1;
                 if (count > 10) count = 10;
 
-                renderFillBlankAnswers(count);
+                renderFillBlankAnswers(count, true);
             });
         }
 
@@ -422,14 +468,15 @@
 
             renderSteps(count);
         });
+
         updateTypeSections();
         renderSteps(parseInt(stepCountInput.value));
-        renderFillBlankAnswers(parseInt(blankCountInput?.value || 1));
 
         Array.from(subtopicSelect.options).forEach(option => {
             if (!option.value) return;
             option.hidden = topicSelect.value && option.dataset.topic !== topicSelect.value;
         });
+
         filterRelatedExercises(subtopicSelect.value);
     </script>
 @endsection
