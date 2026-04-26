@@ -14,12 +14,12 @@ class ExerciseLevelSeeder extends Seeder
     public function run(): void
     {
         $levels = [
-            ['name' => 'Básico'],
-            ['name' => 'Intermedio'],
-            ['name' => 'Avanzado'],
-            ['name' => 'Nivel Examen Real'],
+            ['name' => 'Básico', 'weight' => 1],
+            ['name' => 'Intermedio', 'weight' => 2],
+            ['name' => 'Avanzado', 'weight' => 3],
+            ['name' => 'Nivel Examen Real', 'weight' => 4],
         ];
 
-        DB::table('exercise_levels')->insert($levels);
+        DB::table('exercise_levels')->upsert($levels, ['name'], ['weight']);
     }
 }
