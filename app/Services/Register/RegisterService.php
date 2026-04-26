@@ -10,9 +10,10 @@ class RegisterService
 {
     public function registerStudent(Request $request): void
     {
+        //obteniendo nombre de usuario
         $firstName = trim($request->first_name);
         $lastName = trim($request->last_name);
-
+        //creando user
         User::create([
             'role_id' => 4, // es student
             'first_name' => $firstName,

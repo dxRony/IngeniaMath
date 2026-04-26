@@ -10,9 +10,7 @@ use Illuminate\View\View;
 
 class LoginController extends Controller
 {
-    public function __construct(
-        private LoginService $loginService
-    )
+    public function __construct(private LoginService $loginService)
     {
     }
 
@@ -23,20 +21,22 @@ class LoginController extends Controller
 
     public function login(Request $request): RedirectResponse
     {
+        //validando request
         $request->validate([
             'email' => 'required|email',
             'password' => 'required',
         ]);
+        //iniciando session
         $result = $this->loginService->authenticate($request);
         if (!$result['success']) {
-            return back()->withInput($request->only('email'))
-                ->withErrors(['login' => $result['message'],]);
+            return back()->withInput($request->only('email'))->withErrors(['login' => $result['message'],]);
         }
         return redirect()->route($result['route']);
     }
 
     public function logout(Request $request): RedirectResponse
     {
+        //realizando logout
         $this->loginService->logout($request);
         return redirect()->route('login.index');
     }

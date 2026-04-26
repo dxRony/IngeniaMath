@@ -16,9 +16,8 @@ use Illuminate\Validation\Rule;
 
 class TutorExerciseController extends Controller
 {
-    public function __construct(
-        private ExerciseService $exerciseService
-    ) {
+    public function __construct(private ExerciseService $exerciseService)
+    {
     }
 
     public function index(): View
@@ -67,7 +66,7 @@ class TutorExerciseController extends Controller
 
     public function edit(Exercise $exercise): View
     {
-        if ((int) $exercise->created_by !== (int) auth()->id()) {
+        if ((int)$exercise->created_by !== (int)auth()->id()) {
             abort(403, 'No puedes editar un ejercicio que no te pertenece.');
         }
         if ($exercise->status->name !== 'Borrador') {
@@ -99,7 +98,7 @@ class TutorExerciseController extends Controller
 
     public function update(Request $request, Exercise $exercise): RedirectResponse
     {
-        if ((int) $exercise->created_by !== (int) auth()->id()) {
+        if ((int)$exercise->created_by !== (int)auth()->id()) {
             abort(403, 'No puedes actualizar un ejercicio que no te pertenece.');
         }
         if ($exercise->status->name !== 'Borrador') {
@@ -121,7 +120,7 @@ class TutorExerciseController extends Controller
 
     public function show(Exercise $exercise): View
     {
-        if ((int) $exercise->created_by !== (int) auth()->id()) {
+        if ((int)$exercise->created_by !== (int)auth()->id()) {
             abort(403, 'No puedes ver un ejercicio que no te pertenece.');
         }
         $exercise->load([

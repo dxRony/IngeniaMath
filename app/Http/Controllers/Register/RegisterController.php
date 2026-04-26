@@ -10,9 +10,7 @@ use Illuminate\View\View;
 
 class RegisterController extends Controller
 {
-    public function __construct(
-        private RegisterService $registerService
-    )
+    public function __construct(private RegisterService $registerService)
     {
     }
 
@@ -23,16 +21,16 @@ class RegisterController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        //validando form de registro
         $request->validate([
             'first_name' => 'required|string|max:100',
             'last_name' => 'required|string|max:100',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|min:6|confirmed',
         ]);
-
+        //registrando usuario estudiante
         $this->registerService->registerStudent($request);
 
-        return redirect()->route('login.index')
-            ->with('success', 'Estudiante registrado correctamente. Puedes iniciar sesión.');
+        return redirect()->route('login.index')->with('success', 'Estudiante registrado correctamente. Puedes iniciar sesión.');
     }
 }
