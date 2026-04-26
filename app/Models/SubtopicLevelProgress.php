@@ -44,6 +44,6 @@ class SubtopicLevelProgress extends Model
 
     public function currentDifficulty(): BelongsTo
     {
-        return $this->belongsTo(DifficultyLevel::class, 'current_difficulty_id', 'id');
+        return $this->belongsTo(ExerciseLevel::class, 'current_difficulty_id', 'id');
     }
 }

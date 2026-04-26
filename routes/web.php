@@ -15,6 +15,7 @@ use App\Http\Controllers\Moderator\Resources\ResourceReviewController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Register\RegisterController;
 use App\Http\Controllers\Student\StudentDashboardController;
+use App\Http\Controllers\Student\StudentPracticeController;
 use App\Http\Controllers\Tutor\Resources\ResourceController;
 use App\Http\Controllers\Tutor\TutorDashboardController;
 use App\Http\Controllers\Tutor\TutorExerciseController;
@@ -78,10 +79,10 @@ Route::prefix('moderator')->middleware(['auth', 'active', 'role:2'])->group(func
 
     // Revisión de recursos educativos
     Route::prefix('resources')->name('moderator.resources.')->group(function () {
-        Route::get('/',              [ResourceReviewController::class, 'index'])->name('index');
-        Route::get('/{id}',          [ResourceReviewController::class, 'show'])->name('show')->whereNumber('id');
+        Route::get('/', [ResourceReviewController::class, 'index'])->name('index');
+        Route::get('/{id}', [ResourceReviewController::class, 'show'])->name('show')->whereNumber('id');
         Route::post('/{id}/approve', [ResourceReviewController::class, 'approve'])->name('approve')->whereNumber('id');
-        Route::post('/{id}/reject',  [ResourceReviewController::class, 'reject'])->name('reject')->whereNumber('id');
+        Route::post('/{id}/reject', [ResourceReviewController::class, 'reject'])->name('reject')->whereNumber('id');
     });
 });
 
@@ -106,16 +107,16 @@ Route::prefix('tutor')->middleware(['auth', 'active', 'role:3'])->group(function
 
     // Recursos educativos
     Route::prefix('resources')->name('tutor.resources.')->group(function () {
-        Route::get('/',                [ResourceController::class, 'index'])->name('index');
-        Route::get('/create',          [ResourceController::class, 'create'])->name('create');
-        Route::post('/',               [ResourceController::class, 'store'])->name('store');
+        Route::get('/', [ResourceController::class, 'index'])->name('index');
+        Route::get('/create', [ResourceController::class, 'create'])->name('create');
+        Route::post('/', [ResourceController::class, 'store'])->name('store');
 
         // Edición
-        Route::get('/{id}/edit',       [ResourceController::class, 'edit'])->name('edit')->whereNumber('id');
-        Route::put('/{id}',            [ResourceController::class, 'update'])->name('update')->whereNumber('id');
+        Route::get('/{id}/edit', [ResourceController::class, 'edit'])->name('edit')->whereNumber('id');
+        Route::put('/{id}', [ResourceController::class, 'update'])->name('update')->whereNumber('id');
 
         // Eliminación (cambia a status 4)
-        Route::delete('/{id}',         [ResourceController::class, 'destroy'])->name('destroy')->whereNumber('id');
+        Route::delete('/{id}', [ResourceController::class, 'destroy'])->name('destroy')->whereNumber('id');
     });
 });
 
@@ -130,4 +131,13 @@ Route::prefix('student')->middleware(['auth', 'active', 'role:4'])->group(functi
     ]);
     Route::post('/questions', [QuestionController::class, 'store'])->name('student.questions.store');
     Route::patch('/question-replies/{reply}/accept', [QuestionReplyController::class, 'acceptReply'])->name('student.question-replies.accept');
+
+    //Practica
+    Route::get('/', [StudentPracticeController::class, 'index'])->name('student.practice.index');
+    Route::post('/start', [StudentPracticeController::class, 'start'])->name('student.practice.start');
+    Route::get('/sessions', [StudentPracticeController::class, 'showSessions'])->name('student.practice.sessions');
+    Route::get('/sessions/{session}', [StudentPracticeController::class, 'showSession'])->name('student.practice.sessions.show');
+    Route::get('/sessions/{session}/exercises/{sessionExercise}', [StudentPracticeController::class, 'showExercise'])->name('student.practice.exercises.show');
+    Route::post('/sessions/{session}/exercises/{sessionExercise}/answer', [StudentPracticeController::class, 'answer'])->name('student.practice.exercises.answer');
+    Route::post('/sessions/{session}/exercises/{sessionExercise}/save', [StudentPracticeController::class, 'saveExercise'])->name('student.practice.exercises.save');
 });
