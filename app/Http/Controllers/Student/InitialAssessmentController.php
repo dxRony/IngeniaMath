@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Topic;
 use App\Models\AssessmentModuleResult;
 use App\Services\Student\InitialAssessmentService;
+use App\Services\Student\LearningPathService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\RedirectResponse;
@@ -14,7 +15,8 @@ use App\Models\InitialAssessment;
 class InitialAssessmentController extends Controller
 {
     public function __construct(
-        private readonly InitialAssessmentService $initialAssessmentService
+        private readonly InitialAssessmentService $initialAssessmentService,
+        private readonly LearningPathService $learningPathService,
     ) {}
 
     /**
@@ -102,21 +104,19 @@ class InitialAssessmentController extends Controller
         }
 
         $this->initialAssessmentService->grade($assessment, $request->input('answers', []));
+        $this->learningPathService->generate($assessment);
 
-        return redirect()->route('initial-assessments.results', $assessment->id);
+        return redirect()->route('initial-assessments.results'/* , $assessment->id */);
     }
 
-    public function results(string $id)
+    public function results(/* string $id */)
     {
-        $assessment = InitialAssessment::findOrFail($id);
-
-        if ($assessment->student_id !== Auth::id()) {
-            abort(403);
-        }
+        //$assessment = InitialAssessment::findOrFail($id);
+        $assessment = Auth::user()->initialAssessments->where('is_completed', true)->first();
 
         if (!$assessment->is_completed) {
             return redirect()->route('initial-assessments.show', $assessment->id);
-        }
+        }   
 
         $moduleResults = AssessmentModuleResult::where('assessment_id', $assessment->id)
             ->with(['topic', 'masteryLevel'])

@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('student.main')
 
 @section('content')
 <div style="max-width: 720px; margin: 0 auto; padding: 2.5rem 1.5rem;">
@@ -75,9 +75,9 @@
 
     {{-- Footer --}}
     <div style="display: flex; justify-content: flex-end;">
-        <a href="{{ route('student.dashboard') }}" style="padding: 0.625rem 1.75rem; background: #111827; color: #fff;
+        <a href="{{ route('learning-paths.index') }}" style="padding: 0.625rem 1.75rem; background: #111827; color: #fff;
               border-radius: 8px; font-size: 15px; font-weight: 500; text-decoration: none;">
-            Ir al dashboard
+            Ver ruta de aprendizaje generada
         </a>
     </div>
 

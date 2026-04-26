@@ -16,4 +16,9 @@
         Foro
     </a>
 </li>
+<li class="nav-item">
+    <a class="nav-link text-white" href="{{ route('initial-assessments.results') }}">
+        Examen diagnóstico
+    </a>
+</li>
 @endsection
