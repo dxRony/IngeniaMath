@@ -88,7 +88,7 @@
                 @else
                     <button type="submit" class="btn btn-success"
                             onclick="return confirm('¿Finalizar el simulacro?')">
-                        ✓ Finalizar simulacro
+                         Finalizar simulacro
                     </button>
                 @endif
             </div>

@@ -193,14 +193,13 @@ Route::prefix('student')->middleware(['auth', 'active', 'role:4', 'assessment.co
 
 // Simulacros de examen
     Route::prefix('mock-exams')->name('student.mock-exams.')->group(function () {
-        Route::get('/',                     [\App\Http\Controllers\Student\MockExams\MockExamController::class, 'startForm'])->name('start-form');
-        Route::post('/start',               [\App\Http\Controllers\Student\MockExams\MockExamController::class, 'start'])->name('start');
+        Route::get('/',                     [MockExamController::class, 'startForm'])->name('start-form');
+        Route::post('/start',               [MockExamController::class, 'start'])->name('start');
 
-        Route::get('/{id}/take/{order}',    [\App\Http\Controllers\Student\MockExams\MockExamController::class, 'take'])->name('take')->whereNumber('id')->whereNumber('order');
-        Route::post('/{id}/answer/{order}', [\App\Http\Controllers\Student\MockExams\MockExamController::class, 'answer'])->name('answer')->whereNumber('id')->whereNumber('order');
-        Route::post('/{id}/finish',         [\App\Http\Controllers\Student\MockExams\MockExamController::class, 'finish'])->name('finish')->whereNumber('id');
-
-        Route::get('/{id}/results',         [\App\Http\Controllers\Student\MockExams\MockExamController::class, 'results'])->name('results')->whereNumber('id');
+        Route::get('/{id}/take/{order}',    [MockExamController::class, 'take'])->name('take')->whereNumber('id')->whereNumber('order');
+        Route::post('/{id}/answer/{order}', [MockExamController::class, 'answer'])->name('answer')->whereNumber('id')->whereNumber('order');
+        Route::get('/{id}/finish',          [MockExamController::class, 'finish'])->name('finish')->whereNumber('id');
+        Route::get('/{id}/results',         [MockExamController::class, 'results'])->name('results')->whereNumber('id');
     });
 
 
