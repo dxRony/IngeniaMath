@@ -218,11 +218,25 @@ class ExerciseService
             return (string)($request->correct_answer ?? '');
         }
         return match ($type->name) {
-            //obteniendo respuesta vf o completar espacios del ejercicio
+            //obteniendo respuesta vf o completar espacios del ejercicio u opcion multiple
+            'Opción múltiple' => $this->resolveMultipleChoiceCorrectAnswer($request),
             'Verdadero/Falso' => (string)$request->true_false_answer,
             'Completar espacios' => implode('|', array_map('trim', $request->blank_answers ?? [])),
             default => (string)$request->correct_answer,
         };
+    }
+
+    private function resolveMultipleChoiceCorrectAnswer(Request $request): string
+    {
+        //obteniendo opcion correcta de las multiples
+        $correctOptionIndex = $request->correct_option;
+        $options = $request->options ?? [];
+        //si no se encuentra se devuelve nada
+        if ($correctOptionIndex === null || !isset($options[$correctOptionIndex])) {
+            return '';
+        }
+        //retornando el texto de la opcion correcta
+        return trim((string) ($options[$correctOptionIndex]['option_text'] ?? ''));
     }
 
     private function syncRelatedExercises(Exercise $exercise, array $relatedIds): void
