@@ -101,13 +101,13 @@ class PracticeService
                     'items.subtopic.exercises.level',
                     'items.subtopic.exercises.status',
                 ])->latest('created_at')->first();
-            //si no tiene una ruta activa se retorna
+            //si no tiene una ruta activa se retorna y no se puede realizar practica guiada
             if (!$learningPath) {
                 throw ValidationException::withMessages([
                     'mode_id' => 'No tienes una ruta de aprendizaje activa. Primero debes generar una ruta.',
                 ]);
             }
-            //obteniendo ejercicios para la sesion
+            //obteniendo ejercicios para la sesion guiada
             $exercises = $this->getGuidedPracticeExercises(
                 learningPath: $learningPath,
                 studentId: $studentId,
@@ -173,14 +173,15 @@ class PracticeService
         }
         //obteniendo los ids de los subtemas
         $subtopicIds = $pathItems->pluck('subtopic_id')->unique()->values();
-        //obteniendo el progreso del subtema
+        //obteniendo el progreso historico del subtema
         $progressBySubtopic = SubtopicLevelProgress::where('student_id', $studentId)
             ->whereIn('subtopic_id', $subtopicIds)->get()->keyBy('subtopic_id');
         //ordenando los subtemas por porcentaje de precision
         $orderedSubtopicIds = $subtopicIds
-            ->sortBy(function ($subtopicId) use ($progressBySubtopic) {
+            ->sortBy(function ($subtopicId) use ($progressBySubtopic, $studentId) {
                 $progress = $progressBySubtopic->get($subtopicId);
-                return $progress?->accuracy_percentage ?? 0;
+                return $progress?->accuracy_percentage
+                    ?? $this->getStudentSubtopicAccuracy($studentId, $subtopicId);
             })->values();
         //creando coleccion de ejercicios
         $selectedExercises = collect();
@@ -219,6 +220,10 @@ class PracticeService
             ->whereHas('session', function ($query) use ($studentId) {
                 $query->where('student_id', $studentId);
             })->pluck('exercise_id')->toArray();
+        //obteniendo niveles de dificultad
+        $levelIds = ExerciseLevel::orderBy('id')->pluck('id')->toArray();
+        //ordenando los niveles de dificultad
+        $orderedLevelIds = collect($levelIds)->sortBy(fn($id) => abs($id - $levelId))->values()->toArray();
         //retornando ejercicios que no hayan sido respondidos
         return Exercise::query()
             ->with([
@@ -227,11 +232,13 @@ class PracticeService
                 'type',
                 'multipleChoiceOptions',
                 'steps',
-            ])->where('subtopic_id', $subtopicId)->where('level_id', $levelId)
+            ])->where('subtopic_id', $subtopicId)->whereIn('level_id', $orderedLevelIds)
             ->whereNotIn('id', $recentCorrectExerciseIds)
             ->whereHas('status', function ($query) {
                 $query->whereIn('name', ['Aprobado', 'Publicado']);
-            })->inRandomOrder()->limit($limit)->get();
+            })
+            ->orderByRaw('FIELD(level_id, ' . implode(',', $orderedLevelIds) . ')')
+            ->inRandomOrder()->limit($limit)->get();
     }
 
     public function getSessionData(PracticeSession $session, int $studentId): array
@@ -359,6 +366,7 @@ class PracticeService
             ]);
             //actualizando session de practica
             $this->updateSessionTotals($session);
+            //evaluando progreso en subtema
             $this->updateSubtopicProgress($studentId, $exercise, $isCorrect);
             $this->updateSessionTopicSummary($session, $exercise);
             $this->finishSessionIfCompleted($session);
@@ -489,7 +497,7 @@ class PracticeService
 
     private function updateSubtopicProgress(int $studentId, Exercise $exercise, bool $isCorrect): void
     {
-        //actualizando avance en el subtema
+        //creando o actualizando avance en el subtema
         $progress = SubtopicLevelProgress::firstOrCreate(
             [
                 'student_id' => $studentId,
@@ -520,6 +528,7 @@ class PracticeService
     //calculando el progreso en la dificultad
     private function calculateCurrentDifficultyId(SubtopicLevelProgress $progress, Exercise $exercise, bool $isCorrect): int
     {
+        //subiendo dificultad con 3 correctas consecutivas
         if ($isCorrect && ($progress->consecutive_correct + 1) >= 3) {
             return $this->getNextExerciseLevelId($exercise->level_id) ?? $exercise->level_id;
         }
@@ -527,11 +536,11 @@ class PracticeService
         $correctAfterAnswer = $progress->total_correct + ($isCorrect ? 1 : 0);
         $incorrectAfterAnswer = $totalAfterAnswer - $correctAfterAnswer;
         $incorrectPercentage = ($incorrectAfterAnswer / $totalAfterAnswer) * 100;
-
+        //si falla mas del 60% baja la dificultad
         if ($incorrectPercentage > 60) {
             return $this->getPreviousExerciseLevelId($exercise->level_id) ?? $exercise->level_id;
         }
-
+        //retornando dificultad
         return $progress->current_difficulty_id ?? $exercise->level_id;
     }
 
@@ -601,4 +610,30 @@ class PracticeService
         //si ya se resolvieron los ejercicios, se actualiza el estado de la sesion
         $session->update(['status_id' => $finishedStatus->id, 'ended_at' => now(),]);
     }
+
+    private function getStudentSubtopicAccuracy(int $studentId, int $subtopicId): float
+    {
+        $answered = SessionExercise::query()
+            ->whereNotNull('answered_at')
+            ->whereHas('session', function ($query) use ($studentId) {
+                $query->where('student_id', $studentId);
+            })
+            ->whereHas('exercise', function ($query) use ($subtopicId) {
+                $query->where('subtopic_id', $subtopicId);
+            });
+
+        $total = (clone $answered)->count();
+
+        if ($total === 0) {
+            return 0;
+        }
+
+        $correct = (clone $answered)
+            ->where('is_correct', true)
+            ->count();
+
+        return round(($correct / $total) * 100, 2);
+    }
+
+
 }
