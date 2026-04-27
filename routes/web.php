@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\ExamConfigController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\ResetPasswordController;
@@ -57,6 +58,19 @@ Route::prefix('admin')->middleware(['auth', 'active', 'role:1'])->group(function
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
     Route::patch('/users/{user}/toggle-state', [UserController::class, 'toggleState'])->name('users.toggle-state');
     Route::resource('/users', UserController::class);
+
+    // Configuracion de simulacros
+    Route::prefix('exam-configs')->name('admin.exam-configs.')->group(function () {
+        Route::get('/',                   [ExamConfigController::class, 'index'])->name('index');
+        Route::get('/create',             [ExamConfigController::class, 'create'])->name('create');
+        Route::post('/',                  [ExamConfigController::class, 'store'])->name('store');
+        Route::get('/{id}/edit',          [ExamConfigController::class, 'edit'])->name('edit')->whereNumber('id');
+        Route::put('/{id}',               [ExamConfigController::class, 'update'])->name('update')->whereNumber('id');
+        Route::patch('/{id}/activate',    [ExamConfigController::class, 'activate'])->name('activate')->whereNumber('id');
+        Route::patch('/{id}/deactivate',  [ExamConfigController::class, 'deactivate'])->name('deactivate')->whereNumber('id');
+    });
+
+
 });
 
 // Moderator
