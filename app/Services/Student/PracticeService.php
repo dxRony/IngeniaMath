@@ -13,9 +13,30 @@ use Illuminate\Validation\ValidationException;
 use App\Models\SavedExercise;
 use App\Models\SessionTopicSummary;
 use App\Models\SubtopicLevelProgress;
+use App\Models\LearningPath;
 
 class PracticeService
 {
+    public function startPractice(array $data, int $studentId): PracticeSession
+    {
+        //obtemoemdp el id del modo de sesion
+        $mode = SessionMode::findOrFail($data['mode_id']);
+
+        if ($mode->name === 'Libre') {
+            //si es modo libre se inicia
+            return $this->startFreePractice($data, $studentId);
+        }
+
+        if ($mode->name === 'Guiada') {
+            //si es modo guiada se inicia
+            return $this->startGuidedPractice($data, $studentId);
+        }
+        //si no se reconoce modo se aborta
+        throw ValidationException::withMessages([
+            'mode_id' => 'El tipo de práctica seleccionado no es válido.',
+        ]);
+    }
+
     public function startFreePractice(array $data, int $studentId): PracticeSession
     {
         return DB::transaction(function () use ($data, $studentId) {
@@ -66,12 +87,167 @@ class PracticeService
         });
     }
 
+    public function startGuidedPractice(array $data, int $studentId): PracticeSession
+    {
+        return DB::transaction(function () use ($data, $studentId) {
+            //obteniendo modo y estado de la sesion
+            $mode = SessionMode::where('name', 'Guiada')->firstOrFail();
+            $status = PracticeStatus::where('name', 'En curso')->firstOrFail();
+            //obteniendo ruta de aprendizaje del estudiante activa
+            $learningPath = LearningPath::where('student_id', $studentId)
+                ->where('is_active', true)
+                ->with([
+                    'items.subtopic.topic',
+                    'items.subtopic.exercises.level',
+                    'items.subtopic.exercises.status',
+                ])->latest('created_at')->first();
+            //si no tiene una ruta activa se retorna y no se puede realizar practica guiada
+            if (!$learningPath) {
+                throw ValidationException::withMessages([
+                    'mode_id' => 'No tienes una ruta de aprendizaje activa. Primero debes generar una ruta.',
+                ]);
+            }
+            //obteniendo ejercicios para la sesion guiada
+            $exercises = $this->getGuidedPracticeExercises(
+                learningPath: $learningPath,
+                studentId: $studentId,
+                quantity: (int)$data['quantity']
+            );
+            //si ya no hay ejercicios disponibles, se retorna
+            if ($exercises->isEmpty()) {
+                throw ValidationException::withMessages([
+                    'quantity' => 'No se encontraron ejercicios disponibles para tu ruta de aprendizaje.',
+                ]);
+            }
+            //obteniendo primer ejercicio, modulo y dificultad
+            $firstExercise = $exercises->first();
+            $topicId = $firstExercise->subtopic->topic_id;
+            $initialLevelId = $firstExercise->level_id;
+            //guardando sesion
+            $session = PracticeSession::create([
+                'student_id' => $studentId,
+                'mode_id' => $mode->id,
+                'topic_id' => $topicId,
+                'initial_difficulty_id' => $initialLevelId,
+                'started_at' => now(),
+                'ended_at' => null,
+                'total_exercises' => $exercises->count(),
+                'total_correct' => 0,
+                'total_incorrect' => 0,
+                'total_time_seconds' => 0,
+                'status_id' => $status->id,
+            ]);
+            //creando ejercicios de la sesion
+            foreach ($exercises as $index => $exercise) {
+                SessionExercise::create([
+                    'session_id' => $session->id,
+                    'exercise_id' => $exercise->id,
+                    'order' => $index + 1,
+                    'given_answer' => null,
+                    'is_correct' => null,
+                    'resolution_seconds' => null,
+                    'answered_at' => null,
+                ]);
+            }
+            //retornando con la sesion guiada
+            return $session->load([
+                'mode',
+                'topic',
+                'initialDifficulty',
+                'status',
+                'sessionExercises.exercise.subtopic.topic',
+                'sessionExercises.exercise.level',
+                'sessionExercises.exercise.type',
+            ]);
+        });
+    }
+
+    private function getGuidedPracticeExercises(LearningPath $learningPath, int $studentId, int $quantity)
+    {
+        //obteniendo ejercicios segun la ruta de aprendizaje (no completados)
+        $pathItems = $learningPath->items()->with('subtopic.topic')
+            ->where('is_completed', false)->orderBy('order')->get();
+        //si no hay se obtienen los completados
+        if ($pathItems->isEmpty()) {
+            $pathItems = $learningPath->items()->with('subtopic.topic')->orderBy('order')->get();
+        }
+        //obteniendo los ids de los subtemas
+        $subtopicIds = $pathItems->pluck('subtopic_id')->unique()->values();
+        //obteniendo el progreso historico del subtema
+        $progressBySubtopic = SubtopicLevelProgress::where('student_id', $studentId)
+            ->whereIn('subtopic_id', $subtopicIds)->get()->keyBy('subtopic_id');
+        //ordenando los subtemas por porcentaje de precision
+        $orderedSubtopicIds = $subtopicIds
+            ->sortBy(function ($subtopicId) use ($progressBySubtopic, $studentId) {
+                $progress = $progressBySubtopic->get($subtopicId);
+                return $progress?->accuracy_percentage
+                    ?? $this->getStudentSubtopicAccuracy($studentId, $subtopicId);
+            })->values();
+        //creando coleccion de ejercicios
+        $selectedExercises = collect();
+
+        foreach ($orderedSubtopicIds as $subtopicId) {
+            //si hay menos ejercicios que los pedidos se retorna
+            if ($selectedExercises->count() >= $quantity) {
+                break;
+            }
+            //obteniendo progreso por submodulo
+            $progress = $progressBySubtopic->get($subtopicId);
+            //dificultad
+            $levelId = $progress?->current_difficulty_id
+                ?? ExerciseLevel::orderBy('id')->value('id');
+            //determinando cuantos ejercicios falta para llegar a los solicitados
+            $needed = $quantity - $selectedExercises->count();
+            //obteniendo ejercicios para completar los solicitados
+            $exercises = $this->queryAvailableGuidedExercises(
+                studentId: $studentId,
+                subtopicId: $subtopicId,
+                levelId: $levelId,
+                limit: $needed
+            );
+            //juntando los ejercicios con los obtenidos
+            $selectedExercises = $selectedExercises->merge($exercises);
+        }
+        //retornando los ejercicios para la practica guiada
+        return $selectedExercises->unique('id')->take($quantity)->values();
+    }
+
+    private function queryAvailableGuidedExercises(int $studentId, int $subtopicId, int $levelId, int $limit)
+    {
+        //obteniendo ejercicios que no hayan sido respondidos en los 7 dias anteriores por el estudiante
+        $recentCorrectExerciseIds = SessionExercise::query()
+            ->where('is_correct', true)->where('answered_at', '>=', now()->subDays(7))
+            ->whereHas('session', function ($query) use ($studentId) {
+                $query->where('student_id', $studentId);
+            })->pluck('exercise_id')->toArray();
+        //obteniendo niveles de dificultad
+        $levelIds = ExerciseLevel::orderBy('id')->pluck('id')->toArray();
+        //ordenando los niveles de dificultad
+        $orderedLevelIds = collect($levelIds)->sortBy(fn($id) => abs($id - $levelId))->values()->toArray();
+        //retornando ejercicios que no hayan sido respondidos
+        return Exercise::query()
+            ->with([
+                'subtopic.topic',
+                'level',
+                'type',
+                'multipleChoiceOptions',
+                'steps',
+            ])->where('subtopic_id', $subtopicId)->whereIn('level_id', $orderedLevelIds)
+            ->whereNotIn('id', $recentCorrectExerciseIds)
+            ->whereHas('status', function ($query) {
+                $query->whereIn('name', ['Aprobado', 'Publicado']);
+            })
+            ->orderByRaw('FIELD(level_id, ' . implode(',', $orderedLevelIds) . ')')
+            ->inRandomOrder()->limit($limit)->get();
+    }
+
     public function getSessionData(PracticeSession $session, int $studentId): array
     {
         //validando usuario
         $this->validateSessionOwner($session, $studentId);
         //cargando datos de la sesion
         $session->load([
+            'mode',
             'topic',
             'initialDifficulty',
             'status',
@@ -190,9 +366,10 @@ class PracticeService
             ]);
             //actualizando session de practica
             $this->updateSessionTotals($session);
+            //evaluando progreso en subtema
             $this->updateSubtopicProgress($studentId, $exercise, $isCorrect);
             $this->updateSessionTopicSummary($session, $exercise);
-
+            $this->finishSessionIfCompleted($session);
             return $sessionExercise->refresh();
         });
     }
@@ -320,7 +497,7 @@ class PracticeService
 
     private function updateSubtopicProgress(int $studentId, Exercise $exercise, bool $isCorrect): void
     {
-        //actualizando avance en el subtema
+        //creando o actualizando avance en el subtema
         $progress = SubtopicLevelProgress::firstOrCreate(
             [
                 'student_id' => $studentId,
@@ -351,6 +528,7 @@ class PracticeService
     //calculando el progreso en la dificultad
     private function calculateCurrentDifficultyId(SubtopicLevelProgress $progress, Exercise $exercise, bool $isCorrect): int
     {
+        //subiendo dificultad con 3 correctas consecutivas
         if ($isCorrect && ($progress->consecutive_correct + 1) >= 3) {
             return $this->getNextExerciseLevelId($exercise->level_id) ?? $exercise->level_id;
         }
@@ -358,11 +536,11 @@ class PracticeService
         $correctAfterAnswer = $progress->total_correct + ($isCorrect ? 1 : 0);
         $incorrectAfterAnswer = $totalAfterAnswer - $correctAfterAnswer;
         $incorrectPercentage = ($incorrectAfterAnswer / $totalAfterAnswer) * 100;
-
+        //si falla mas del 60% baja la dificultad
         if ($incorrectPercentage > 60) {
             return $this->getPreviousExerciseLevelId($exercise->level_id) ?? $exercise->level_id;
         }
-
+        //retornando dificultad
         return $progress->current_difficulty_id ?? $exercise->level_id;
     }
 
@@ -409,10 +587,53 @@ class PracticeService
     public function getStudentSessions(int $studentId)
     {
         return PracticeSession::with([
+            'mode',
             'topic',
             'initialDifficulty',
             'status',
             'sessionExercises',
         ])->where('student_id', $studentId)->latest('started_at')->get();
     }
+
+    private function finishSessionIfCompleted(PracticeSession $session): void
+    {
+        //obteniendo total de ejercicios de la sesion
+        $totalExercises = SessionExercise::where('session_id', $session->id)->count();
+        //obteniendo los ejercisios respondidos de la sesion
+        $answeredExercises = SessionExercise::where('session_id', $session->id)->whereNotNull('answered_at')->count();
+        //si no se han completado los ejercicios no pasa nada
+        if ($totalExercises === 0 || $answeredExercises < $totalExercises) {
+            return;
+        }
+        //obteniendo estado finalizada
+        $finishedStatus = PracticeStatus::where('name', 'Finalizada')->firstOrFail();
+        //si ya se resolvieron los ejercicios, se actualiza el estado de la sesion
+        $session->update(['status_id' => $finishedStatus->id, 'ended_at' => now(),]);
+    }
+
+    private function getStudentSubtopicAccuracy(int $studentId, int $subtopicId): float
+    {
+        $answered = SessionExercise::query()
+            ->whereNotNull('answered_at')
+            ->whereHas('session', function ($query) use ($studentId) {
+                $query->where('student_id', $studentId);
+            })
+            ->whereHas('exercise', function ($query) use ($subtopicId) {
+                $query->where('subtopic_id', $subtopicId);
+            });
+
+        $total = (clone $answered)->count();
+
+        if ($total === 0) {
+            return 0;
+        }
+
+        $correct = (clone $answered)
+            ->where('is_correct', true)
+            ->count();
+
+        return round(($correct / $total) * 100, 2);
+    }
+
+
 }
