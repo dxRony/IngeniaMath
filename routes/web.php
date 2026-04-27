@@ -21,6 +21,7 @@ use App\Http\Controllers\Tutor\TutorDashboardController;
 use App\Http\Controllers\Tutor\TutorExerciseController;
 use App\Http\Controllers\Student\InitialAssessmentController;
 use App\Http\Controllers\Student\LearningPathController;
+use App\Http\Controllers\Student\WeeklyPlanController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -161,6 +162,9 @@ Route::prefix('student')->middleware(['auth', 'active', 'role:4', 'assessment.co
     // Ruta de aprendizaje
     Route::get('/learning-paths', [LearningPathController::class, 'index'])
         ->name('learning-paths.index');
+
+    // Plan semanal
+    Route::resource('/weekly-plans', WeeklyPlanController::class);
 });
 
 // Student — rutas del diagnóstico (SIN assessment.completed)
