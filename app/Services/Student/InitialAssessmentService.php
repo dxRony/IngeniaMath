@@ -9,6 +9,7 @@ use App\Models\Topic;
 use App\Models\ExerciseLevel;
 use App\Models\MasteryLevel;
 use App\Models\AssessmentModuleResult;
+use App\Models\ModuleProgress;
 use Illuminate\Support\Facades\DB;
 
 class InitialAssessmentService
@@ -122,6 +123,13 @@ class InitialAssessmentService
 
             AssessmentModuleResult::create([
                 'assessment_id'    => $assessment->id,
+                'topic_id'         => $topicId,
+                'mastery_level_id' => $masteryLevelId,
+                'score'            => $score,
+            ]);
+
+            ModuleProgress::create([
+                'student_id'       => $assessment->student_id,
                 'topic_id'         => $topicId,
                 'mastery_level_id' => $masteryLevelId,
                 'score'            => $score,

@@ -492,6 +492,7 @@ class PracticeService
             'total_correct' => $totalCorrect,
             'total_incorrect' => $totalIncorrect,
             'total_time_seconds' => $totalTimeSeconds,
+            'ended_at' => now(),
         ]);
     }
 
@@ -514,7 +515,7 @@ class PracticeService
         );
         $totalExercises = $progress->total_exercises + 1;
         $totalCorrect = $progress->total_correct + ($isCorrect ? 1 : 0);
-        //actualizando progreso
+        //actualizando progreso ****************************************
         $progress->update([
             'current_difficulty_id' => $this->calculateCurrentDifficultyId($progress, $exercise, $isCorrect),
             'consecutive_correct' => $isCorrect ? $progress->consecutive_correct + 1 : 0,
