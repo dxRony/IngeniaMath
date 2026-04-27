@@ -17,6 +17,11 @@
     </a>
 </li>
 <li class="nav-item">
+    <a class="nav-link text-white" href="{{ route('weekly-plans.index') }}">
+        Plan semanal
+    </a>
+</li>
+<li class="nav-item">
     <a class="nav-link text-white" href="{{ route('initial-assessments.results') }}">
         Examen diagnóstico
     </a>
@@ -31,5 +36,13 @@
     <a class="nav-link text-white" href="{{ route('student.mock-exams.start-form') }}">
         Simulacro
     </a>
+<li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle text-white" href="#" role="button" data-bs-toggle="dropdown">
+        Práctica
+    </a>
+    <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="{{ route('student.practice.index') }}">Iniciar sesion de práctica</a></li>
+        <li><a class="dropdown-item" href="{{ route('student.practice.sessions') }}">Ver mis sesiones</a></li>
+    </ul>
 </li>
 @endsection

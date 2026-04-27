@@ -14,14 +14,16 @@ class ExerciseReviewService
 
     public function getExercisesInReview(): Collection
     {
+        //obteniendo estado en revision
         $reviewStatus = ExerciseStatus::where('name', 'En revisión')->firstOrFail();
-
+        //retornando ejercicios en revision
         return Exercise::with(['subtopic.topic', 'level', 'type', 'creator'])
             ->where('status_id', $reviewStatus->id)->latest()->get();
     }
 
     public function getExerciseForReview(int $exerciseId): Exercise
     {
+        //retornando ejercicio en revision por id
         return Exercise::with([
             'subtopic.topic',
             'level',
@@ -38,6 +40,7 @@ class ExerciseReviewService
 
     public function reviewExercise(Exercise $exercise, int $reviewerId, bool $isApproved, ?string $feedback): void
     {
+        //obteniendo estados de  revision de ejercicios
         $inReviewStatus = ExerciseStatus::where('name', 'En revisión')->firstOrFail();
         $approvedStatus = ExerciseStatus::where('name', 'Aprobado')->firstOrFail();
         $draftStatus = ExerciseStatus::where('name', 'Borrador')->firstOrFail();
@@ -45,17 +48,16 @@ class ExerciseReviewService
         if ((int) $exercise->status_id !== (int) $inReviewStatus->id) {
             abort(400, 'Solo se pueden revisar ejercicios que estén en revisión.');
         }
-
         if ($isApproved) {
-            $hasPendingDuplicates = DuplicateAlert::where('new_exercise_id', $exercise->id)
-                ->where('is_resolved', false)
-                ->exists();
+            //validando que no se apruebe un ejercicio duplicado posiblemente
+            $hasPendingDuplicates = DuplicateAlert::where('new_exercise_id', $exercise->id)->where('is_resolved', false)->exists();
 
             if ($hasPendingDuplicates) {
                 abort(400, 'No puedes aprobar este ejercicio mientras tenga alertas de duplicado pendientes.');
             }
         }
 
+        //creando revision del ejercicio
         DB::transaction(function () use ($exercise, $reviewerId, $isApproved, $feedback, $approvedStatus, $draftStatus) {
             ExerciseReview::create([
                 'exercise_id' => $exercise->id,
@@ -64,6 +66,7 @@ class ExerciseReviewService
                 'feedback' => $feedback,
                 'reviewed_at' => now(),
             ]);
+            //actualizando ejercicio
             $exercise->update([
                 'status_id' => $isApproved ? $approvedStatus->id : $draftStatus->id,
             ]);
@@ -72,6 +75,7 @@ class ExerciseReviewService
 
     public function getAlertDetail(int $alertId): DuplicateAlert
     {
+        //metodo para obtener el detalle de la alerta de duplocado
         return DuplicateAlert::with([
             'newExercise.subtopic.topic',
             'newExercise.level',
@@ -92,6 +96,7 @@ class ExerciseReviewService
 
     public function markAsResolved(DuplicateAlert $duplicateAlert): void
     {
+        //marcar alerta como resuelta
         $duplicateAlert->update([
             'is_resolved' => true,
         ]);
@@ -99,11 +104,13 @@ class ExerciseReviewService
 
     public function rejectNewExerciseFromAlert(DuplicateAlert $duplicateAlert, int $reviewerId): void
     {
+        //obteniendo alerta de duplicado
         $duplicateAlert->load('newExercise');
-
+        //estado en borrador
         $draftStatus = ExerciseStatus::where('name', 'Borrador')->firstOrFail();
 
         DB::transaction(function () use ($duplicateAlert, $reviewerId, $draftStatus) {
+            //creando revision con rechazo por duplicado
             ExerciseReview::create([
                 'exercise_id' => $duplicateAlert->newExercise->id,
                 'reviewed_by' => $reviewerId,
@@ -111,11 +118,11 @@ class ExerciseReviewService
                 'feedback' => 'El ejercicio fue rechazado por posible duplicado detectado en el banco.',
                 'reviewed_at' => now(),
             ]);
-
+            //pasando ejercicio a borrador
             $duplicateAlert->newExercise->update([
                 'status_id' => $draftStatus->id,
             ]);
-
+            //solventando alerta de duplicado
             DuplicateAlert::where('new_exercise_id', $duplicateAlert->newExercise->id)
                 ->update([
                     'is_resolved' => true,

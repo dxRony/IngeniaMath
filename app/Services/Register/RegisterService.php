@@ -11,6 +11,7 @@ class RegisterService
 {
     public function registerStudent(Request $request): User
     {
+        //obteniendo nombre de usuario
         $firstName = trim($request->first_name);
         $lastName = trim($request->last_name);
 
