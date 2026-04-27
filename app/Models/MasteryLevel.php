@@ -21,6 +21,11 @@ class MasteryLevel extends Model
         return $this->hasMany(AssessmentModuleResult::class, 'mastery_level_id', 'id');
     }
 
+    public function moduleProgress(): HasMany
+    {
+        return $this->hasMany(ModuleProgress::class, 'mastery_level_id', 'id');
+    }
+
     public function pathItems(): HasMany
     {
         return $this->hasMany(PathItem::class, 'mastery_level_id', 'id');

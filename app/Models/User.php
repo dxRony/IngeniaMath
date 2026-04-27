@@ -51,4 +51,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(InitialAssessment::class, 'student_id', 'id');
     }
+
+    public function moduleProgress(): HasMany
+    {
+        return $this->hasMany(ModuleProgress::class, 'student_id', 'id');
+    }
 }
