@@ -8,9 +8,7 @@ use Illuminate\View\View;
 
 class TutorDashboardController extends Controller
 {
-    public function __construct(
-        private readonly TutorDashboardService $dashboardService
-    ) {
+    public function __construct(private readonly TutorDashboardService $dashboardService) {
     }
 
     public function index(): View

@@ -6,14 +6,8 @@
 @section('home-route', route('admin.dashboard'))
 
 @section('menu')
-    {{-- <li class="nav-item">
-        <a class="nav-link text-white" href="{{ route('admin.dashboard') }}">Inicio</a>
-    </li> --}}
     <li class="nav-item">
         <a class="nav-link text-white" href="{{ route('users.index') }}">Gestión de usuarios</a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link text-white" href=#>Funci 2</a>
     </li>
     <li class="nav-item">
         <a class="nav-link text-white" href="{{ route('admin.exam-configs.index') }}">
