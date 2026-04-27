@@ -1,72 +1,67 @@
 @extends('student.main')
 
 @section('content')
-<div style="max-width: 720px; margin: 0 auto; padding: 2.5rem 1.5rem;">
+<div class="container py-4" style="max-width: 820px;">
 
     {{-- Topbar --}}
-    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem;">
-        <h1 style="font-size: 22px; font-weight: 500; margin: 0;">Revisión del diagnóstico</h1>
-        <span style="font-size: 13px; color: #6b7280;">
+    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2 mb-4">
+        <h1 class="h3 fw-semibold mb-0">Revisión del diagnóstico</h1>
+        <span class="small text-muted">
             Ejercicio {{ $order }} de {{ $total }}
         </span>
     </div>
 
     {{-- Barra de progreso --}}
-    <div style="height: 4px; background: #f3f4f6; border-radius: 2px; overflow: hidden; margin-bottom: 2rem;">
-        <div style="height: 100%; width: {{ round($order / $total * 100, 1) }}%;
-                background: #111827; border-radius: 2px;"></div>
+    <div class="progress mb-4" style="height: 6px;">
+        <div class="progress-bar bg-dark" role="progressbar" style="width: {{ round($order / $total * 100, 1) }}%;"></div>
     </div>
 
     {{-- Card del ejercicio --}}
     @php
     $isCorrect = $item->is_correct;
     $typeName = $item->exercise->type->name;
+    $statusClass = $isCorrect ? 'text-bg-success' : ($item->given_answer ? 'text-bg-danger' : 'text-bg-secondary');
+    $answerBoxClass = $isCorrect ? 'alert-success border-success' : 'alert-danger border-danger';
     @endphp
 
-    <div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
-              padding: 1.5rem; margin-bottom: 1.5rem;">
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
 
         {{-- Meta --}}
-        <div style="display: flex; gap: 8px; margin-bottom: 1rem; align-items: center;">
-            <span style="font-size: 12px; padding: 3px 10px; border-radius: 20px; background: #f3f4f6; color: #6b7280;">
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+            <span class="badge rounded-pill text-bg-light border text-secondary">
                 {{ $item->exercise->subtopic->topic->name }}
             </span>
-            <span style="font-size: 12px; padding: 3px 10px; border-radius: 20px; background: #f3f4f6; color: #6b7280;">
+            <span class="badge rounded-pill text-bg-light border text-secondary">
                 {{ $item->exercise->level->name }}
             </span>
-            <span style="font-size: 12px; padding: 3px 10px; border-radius: 20px; margin-left: auto;
-                   background: {{ $isCorrect ? '#EAF3DE' : '#FCEBEB' }};
-                   color: {{ $isCorrect ? '#3B6D11' : '#A32D2D' }};">
+            <span class="badge {{ $statusClass }} ms-md-auto">
                 {{ $isCorrect ? 'Correcta' : ($item->given_answer ? 'Incorrecta' : 'Sin responder') }}
             </span>
         </div>
 
         {{-- Enunciado --}}
-        <p style="font-size: 16px; line-height: 1.6; margin: 0 0 1.25rem;">
+        <p class="fs-6 lh-lg mb-4">
             {!! $item->exercise->statement !!}
         </p>
 
         {{-- Imagen opcional --}}
         @if($item->exercise->image_url)
-        <img src="{{ Storage::url($item->exercise->image_url) }}" alt="Imagen de apoyo" style="width: 100%; max-height: 200px; object-fit: contain;
-                border-radius: 8px; border: 1px solid #e5e7eb; margin-bottom: 1.25rem;">
+        <img src="{{ Storage::url($item->exercise->image_url) }}" alt="Imagen de apoyo"
+            class="img-fluid rounded border mb-4" style="max-height: 200px; object-fit: contain; width: 100%;">
         @endif
 
-        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 1.25rem 0;">
+        <hr class="my-4">
 
         {{-- Respuestas --}}
-        <p style="font-size: 12px; font-weight: 500; color: #6b7280; text-transform: uppercase;
-              letter-spacing: 0.05em; margin: 0 0 8px;">Respuestas</p>
+        <p class="small fw-semibold text-uppercase text-muted mb-2">Respuestas</p>
 
-        <div style="display: flex; gap: 12px; margin-bottom: 1rem;">
+        <div class="row g-2 mb-3">
             {{-- Respuesta dada --}}
-            <div style="flex: 1; padding: 0.625rem 0.875rem; border-radius: 8px;
-                  background: {{ $isCorrect ? '#EAF3DE' : '#FCEBEB' }};
-                  border: 0.5px solid {{ $isCorrect ? '#97C459' : '#F09595' }};">
-                <p style="font-size: 11px; margin: 0 0 3px; opacity: 0.7;
-                  color: {{ $isCorrect ? '#3B6D11' : '#A32D2D' }};">Tu respuesta</p>
-                <p style="font-size: 14px; font-weight: 500; margin: 0;
-                  color: {{ $isCorrect ? '#3B6D11' : '#A32D2D' }};">
+            <div class="col-12 col-lg-6">
+                <div class="alert {{ $answerBoxClass }} mb-0 border">
+                    <p class="small mb-1 opacity-75">Tu respuesta</p>
+                    <p class="fw-semibold mb-0">
                     @if($item->given_answer)
                     @if($typeName === 'Completar espacios')
                     {{ implode(' / ', explode('|', $item->given_answer)) }}
@@ -78,59 +73,55 @@
                     @else
                     <em>Sin responder</em>
                     @endif
-                </p>
+                    </p>
+                </div>
             </div>
 
             {{-- Respuesta correcta --}}
             @if(!$isCorrect)
-            <div style="flex: 1; padding: 0.625rem 0.875rem; border-radius: 8px;
-                  background: #EAF3DE; border: 0.5px solid #97C459;">
-                <p style="font-size: 11px; margin: 0 0 3px; opacity: 0.7; color: #3B6D11;">
-                    Respuesta correcta
-                </p>
-                <p style="font-size: 14px; font-weight: 500; margin: 0; color: #3B6D11;">
-                    @if($typeName === 'Completar espacios')
-                    {{ implode(' / ', explode('|', $item->exercise->correct_answer)) }}
-                    @else
-                    {{ $item->exercise->correct_answer }}
-                    @endif
-                </p>
+            <div class="col-12 col-lg-6">
+                <div class="alert alert-success border-success mb-0 border">
+                    <p class="small mb-1 opacity-75">Respuesta correcta</p>
+                    <p class="fw-semibold mb-0">
+                        @if($typeName === 'Completar espacios')
+                        {{ implode(' / ', explode('|', $item->exercise->correct_answer)) }}
+                        @else
+                        {{ $item->exercise->correct_answer }}
+                        @endif
+                    </p>
+                </div>
             </div>
             @endif
         </div>
 
         {{-- Explicación conceptual --}}
         @if($item->exercise->concept_explanation)
-        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 1.25rem 0;">
-        <p style="font-size: 12px; font-weight: 500; color: #6b7280; text-transform: uppercase;
-              letter-spacing: 0.05em; margin: 0 0 8px;">Explicación conceptual</p>
-        <p style="font-size: 14px; color: #6b7280; line-height: 1.6; margin: 0 0 1rem;">
+        <hr class="my-4">
+        <p class="small fw-semibold text-uppercase text-muted mb-2">Explicación conceptual</p>
+        <p class="text-muted lh-lg mb-3">
             {!! $item->exercise->concept_explanation !!}
         </p>
         @endif
 
         {{-- Pasos de solución --}}
         @if($item->exercise->steps->isNotEmpty())
-        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 1.25rem 0;">
-        <p style="font-size: 12px; font-weight: 500; color: #6b7280; text-transform: uppercase;
-              letter-spacing: 0.05em; margin: 0 0 8px;">Solución paso a paso</p>
+        <hr class="my-4">
+        <p class="small fw-semibold text-uppercase text-muted mb-2">Solución paso a paso</p>
 
-        <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div class="d-flex flex-column gap-3">
             @foreach($item->exercise->steps->sortBy('step_number') as $step)
-            <div style="display: flex; gap: 12px;">
-                <div style="width: 24px; height: 24px; border-radius: 50%; background: #f3f4f6;
-                    border: 1px solid #e5e7eb; font-size: 12px; font-weight: 500;
-                    color: #6b7280; display: flex; align-items: center; justify-content: center;
-                    flex-shrink: 0; margin-top: 1px;">
+            <div class="d-flex gap-2">
+                <div class="rounded-circle border bg-light text-muted d-flex align-items-center justify-content-center flex-shrink-0"
+                    style="width: 24px; height: 24px; font-size: 12px;">
                     {{ $step->step_number }}
                 </div>
-                <div style="flex: 1;">
-                    <p style="font-size: 14px; line-height: 1.6; margin: 0 0 6px;">
+                <div class="flex-grow-1">
+                    <p class="mb-2 lh-lg">
                         {!! $step->description !!}
                     </p>
                     @if($step->image_url)
-                    <img src="{{ Storage::url($step->image_url) }}" alt="Paso {{ $step->step_number }}" style="width: 100%; max-height: 160px; object-fit: contain;
-                      border-radius: 6px; border: 1px solid #e5e7eb;">
+                    <img src="{{ Storage::url($step->image_url) }}" alt="Paso {{ $step->step_number }}"
+                      class="img-fluid rounded border" style="max-height: 160px; object-fit: contain; width: 100%;">
                     @endif
                 </div>
             </div>
@@ -138,34 +129,30 @@
         </div>
         @endif
 
+        </div>
     </div>
 
     {{-- Navegación --}}
-    <div style="display: flex; justify-content: space-between; align-items: center;">
+    <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
         @if($order > 1)
-        <a href="{{ route('initial-assessments.review', [$assessment->id, $order - 1]) }}" style="padding: 0.625rem 1.5rem; border-radius: 8px; font-size: 15px; font-weight: 500;
-              border: 1px solid #d1d5db; background: transparent; text-decoration: none;
-              color: #111827;">
+        <a href="{{ route('initial-assessments.review', [$assessment->id, $order - 1]) }}" class="btn btn-outline-secondary">
             Anterior
         </a>
         @else
-        <a href="{{ route('initial-assessments.results') }}" style="padding: 0.625rem 1.5rem; border-radius: 8px; font-size: 15px; font-weight: 500;
-              border: 1px solid #d1d5db; background: transparent; text-decoration: none;
-              color: #111827;">
+        <a href="{{ route('initial-assessments.results') }}" class="btn btn-outline-secondary">
             Ver resultados
         </a>
         @endif
 
-        @if($order < $total) <a href="{{ route('initial-assessments.review', [$assessment->id, $order + 1]) }}" style="padding: 0.625rem 1.5rem; border-radius: 8px; font-size: 15px; font-weight: 500;
-              background: #111827; color: #fff; border: none; text-decoration: none;">
+        @if($order < $total)
+            <a href="{{ route('initial-assessments.review', [$assessment->id, $order + 1]) }}" class="btn btn-dark">
             Siguiente
             </a>
-            @else
-            <a href="{{ route('initial-assessments.results') }}" style="padding: 0.625rem 1.5rem; border-radius: 8px; font-size: 15px; font-weight: 500;
-              background: #111827; color: #fff; border: none; text-decoration: none;">
+        @else
+            <a href="{{ route('initial-assessments.results') }}" class="btn btn-dark">
                 Ver resultados
             </a>
-            @endif
+        @endif
     </div>
 
 </div>

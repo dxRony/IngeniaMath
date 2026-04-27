@@ -1,6 +1,6 @@
-<div style="font-size: 15px; line-height: 2.2;">
+<div class="lh-lg">
     @php
-    $parts = explode('___', $item->exercise->statement);
+    $parts = explode('__', $item->exercise->statement);
     $savedAnswers = $item->given_answer ? json_decode($item->given_answer, true) : [];
     @endphp
 
@@ -8,9 +8,8 @@
     {!! $part !!}
     @if(!$loop->last)
     <input type="text" name="answers[{{ $item->exercise_id }}][{{ $i }}]" value="{{ $savedAnswers[$i] ?? '' }}"
-        placeholder="?" style="width: 90px; font-size: 15px; border: none;
-                    border-bottom: 1.5px solid #374151; background: transparent;
-                    padding: 2px 4px; margin: 0 4px; outline: none;">
+        placeholder="?" class="form-control-sm d-inline-block border-0 border-bottom rounded-0 px-1 mx-1 shadow-none text-center"
+        style="width: 56px; min-width: 56px;">
     @endif
     @endforeach
 </div>

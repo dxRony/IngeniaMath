@@ -1,14 +1,12 @@
 @extends('student.main')
 
 @section('content')
-<div style="max-width: 720px; margin: 0 auto; padding: 2.5rem 1.5rem;">
+<div class="container py-4" style="max-width: 820px;">
 
     {{-- Header --}}
-    <div style="margin-bottom: 2rem;">
-        <h1 style="font-size: 22px; font-weight: 500; margin: 0 0 6px;">
-            Resultados del diagnóstico
-        </h1>
-        <p style="font-size: 15px; color: #6b7280; margin: 0;">
+    <div class="mb-4">
+        <h1 class="h3 fw-semibold mb-2">Resultados del diagnóstico</h1>
+        <p class="text-muted mb-0">
             Aquí está tu nivel de dominio actual por módulo. Tu ruta de aprendizaje ha sido generada.
         </p>
     </div>
@@ -20,68 +18,71 @@
     $deficiente = $moduleResults->where('masteryLevel.name', 'Deficiente')->count();
     @endphp
 
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-              gap: 12px; margin-bottom: 2rem;">
+    <div class="row g-2 mb-4">
         @foreach([
         ['Respondidas correctamente', $totalCorrect . ' / ' . $totalExercises],
         ['Módulos dominados', $dominado],
         ['En desarrollo', $enDesarrollo],
         ['Deficientes', $deficiente],
         ] as $metric)
-        <div style="background: #f9fafb; border-radius: 8px; padding: 1rem;">
-            <p style="font-size: 13px; color: #6b7280; margin: 0 0 4px;">{{ $metric[0] }}</p>
-            <p style="font-size: 24px; font-weight: 500; margin: 0;">{{ $metric[1] }}</p>
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="bg-light rounded p-3 h-100">
+                <p class="small text-muted mb-1">{{ $metric[0] }}</p>
+                <p class="fs-4 fw-semibold mb-0">{{ $metric[1] }}</p>
+            </div>
         </div>
         @endforeach
     </div>
 
-    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 1.5rem 0;">
+    <hr class="my-4">
 
     {{-- Detalle por módulo --}}
-    <p style="font-size: 13px; font-weight: 500; color: #6b7280; margin: 0 0 0.75rem;
-            text-transform: uppercase; letter-spacing: 0.05em;">
-        Detalle por módulo
-    </p>
+    <p class="small fw-semibold text-uppercase text-muted mb-3">Detalle por módulo</p>
 
-    <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 2rem;">
+    <div class="d-flex flex-column gap-2 mb-4">
         @foreach($moduleResults as $result)
         @php
         $name = $result->masteryLevel->name;
         $score = (int) $result->score;
-        $badgeBg = match($name) { 'Dominado' => '#EAF3DE', 'En desarrollo' => '#FAEEDA', default => '#FCEBEB' };
-        $badgeText= match($name) { 'Dominado' => '#3B6D11', 'En desarrollo' => '#854F0B', default => '#A32D2D' };
-        $barColor = match($name) { 'Dominado' => '#639922', 'En desarrollo' => '#BA7517', default => '#E24B4A' };
+        $badgeClass = match($name) {
+            'Dominado' => 'text-bg-success',
+            'En desarrollo' => 'text-bg-warning',
+            default => 'text-bg-danger'
+        };
+        $barClass = match($name) {
+            'Dominado' => 'bg-success',
+            'En desarrollo' => 'bg-warning',
+            default => 'bg-danger'
+        };
         @endphp
-        <div style="display: flex; align-items: center; gap: 12px; padding: 0.875rem 1rem;
-                background: #fff; border: 1px solid #e5e7eb; border-radius: 8px;">
-            <span style="font-size: 14px; flex: 1;">{{ $result->topic->name }}</span>
-            <div style="flex: 1; max-width: 160px; height: 6px; background: #f3f4f6;
-                  border-radius: 3px; overflow: hidden;">
-                <div style="height: 100%; width: {{ $score }}%; background: {{ $barColor }};
-                    border-radius: 3px;"></div>
+        <div class="border rounded p-3 bg-white">
+            <div class="d-flex flex-column flex-md-row align-items-md-center gap-3">
+                <span class="flex-grow-1">{{ $result->topic->name }}</span>
+
+                <div class="w-100" style="max-width: 220px;">
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar {{ $barClass }}" role="progressbar" style="width: {{ $score }}%;"></div>
+                    </div>
+                </div>
+
+                <span class="fw-semibold" style="min-width: 52px;">{{ $score }}%</span>
+
+                <span class="badge {{ $badgeClass }}" style="min-width: 110px;">
+                    {{ $name }}
+                </span>
             </div>
-            <span style="font-size: 14px; font-weight: 500; min-width: 44px; text-align: right;">
-                {{ $score }}%
-            </span>
-            <span style="font-size: 12px; padding: 3px 10px; border-radius: 20px; min-width: 90px;
-                   text-align: center; background: {{ $badgeBg }}; color: {{ $badgeText }};">
-                {{ $name }}
-            </span>
         </div>
         @endforeach
     </div>
 
-    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 1.5rem 0;">
+    <hr class="my-4">
 
     {{-- Footer --}}
-    <div style="display: flex; justify-content: flex-end;">
-        <a href="{{ route('learning-paths.index') }}" style="padding: 0.625rem 1.75rem; background: #111827; color: #fff;
-              border-radius: 8px; font-size: 15px; font-weight: 500; text-decoration: none;">
+    <div class="d-flex flex-column flex-md-row justify-content-end gap-2">
+        <a href="{{ route('learning-paths.index') }}" class="btn btn-dark">
             Ver ruta de aprendizaje generada
         </a>
-        <a href="{{ route('initial-assessments.review', [$assessment->id, 1]) }}" style="padding: 0.625rem 1.75rem; background: transparent; color: #111827;
-            border-radius: 8px; font-size: 15px; font-weight: 500;
-            text-decoration: none; border: 1px solid #d1d5db;">
+        <a href="{{ route('initial-assessments.review', [$assessment->id, 1]) }}" class="btn btn-outline-secondary">
             Revisar ejercicios
         </a>
     </div>

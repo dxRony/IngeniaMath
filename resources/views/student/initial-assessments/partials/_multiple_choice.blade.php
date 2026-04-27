@@ -1,10 +1,9 @@
-<div style="display: flex; flex-direction: column; gap: 8px;">
+<div class="d-flex flex-column gap-2">
     @foreach($item->exercise->multipleChoiceOptions as $option)
-    <label style="display: flex; align-items: center; gap: 12px; padding: 0.75rem 1rem;
-                border: 1px solid #e5e7eb; border-radius: 8px; cursor: pointer;">
-        <input type="radio" name="answers[{{ $item->exercise_id }}]" value="{{ $option->option_text }}" {{ $item->given_answer ==
+    <label class="border rounded p-3 d-flex align-items-center gap-2 cursor-pointer">
+        <input type="radio" class="form-check-input m-0" name="answers[{{ $item->exercise_id }}]" value="{{ $option->option_text }}" {{ $item->given_answer ==
         $option->option_text ? 'checked' : '' }}>
-        <span style="font-size: 15px;">{{ $option->option_text }}</span>
+        <span>{{ $option->option_text }}</span>
     </label>
     @endforeach
 </div>
