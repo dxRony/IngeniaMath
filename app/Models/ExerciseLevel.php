@@ -13,6 +13,7 @@ class ExerciseLevel extends Model
 
     protected $fillable = [
         'name',
+        'weight',
     ];
 
     public function exercises(): HasMany

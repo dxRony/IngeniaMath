@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\Register\RegisterService;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class RegisterController extends Controller
@@ -28,9 +29,11 @@ class RegisterController extends Controller
             'email' => 'required|email|unique:users,email',
             'password' => 'required|min:6|confirmed',
         ]);
-        //registrando usuario estudiante
-        $this->registerService->registerStudent($request);
 
-        return redirect()->route('login.index')->with('success', 'Estudiante registrado correctamente. Puedes iniciar sesión.');
+        $user = $this->registerService->registerStudent($request);
+
+        Auth::login($user);
+
+        return redirect()->route('initial-assessments.index');
     }
 }

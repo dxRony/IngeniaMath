@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\Login\LoginService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class LoginController extends Controller
@@ -31,6 +32,12 @@ class LoginController extends Controller
         if (!$result['success']) {
             return back()->withInput($request->only('email'))->withErrors(['login' => $result['message'],]);
         }
+
+        $pendingInitialAssessment = Auth::user()->initialAssessments->where('is_completed', false)->first();
+        if ($pendingInitialAssessment) {
+            return redirect()->route('initial-assessments.index');
+        }
+
         return redirect()->route($result['route']);
     }
 
