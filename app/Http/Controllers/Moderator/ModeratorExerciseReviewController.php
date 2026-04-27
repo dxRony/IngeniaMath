@@ -19,31 +19,30 @@ class ModeratorExerciseReviewController extends Controller
 
     public function index(): View
     {
+        //obteniendo ejercicios en revision
         $exercises = $this->exerciseReviewService->getExercisesInReview();
         return view('moderator.exercises.review-index', compact('exercises'));
     }
 
     public function show(Exercise $exercise): View
     {
+        //obteniendo detalle del ejercicio a revisar
         $exercise = $this->exerciseReviewService->getExerciseForReview($exercise->id);
         return view('moderator.exercises.review-show', compact('exercise'));
     }
 
     public function review(Request $request, Exercise $exercise): RedirectResponse
     {
+        //creando revision de ejercicio
         $request->validate([
             'decision' => 'required|in:approve,reject',
             'feedback' => 'nullable|string',
         ]);
-
+        //obteniendo decision true/false
         $isApproved = $request->decision === 'approve';
+        //revisando ejercicio
+        $this->exerciseReviewService->reviewExercise($exercise, auth()->id(), $isApproved, $request->feedback);
 
-        $this->exerciseReviewService->reviewExercise(
-            $exercise,
-            auth()->id(),
-            $isApproved,
-            $request->feedback
-        );
         return redirect()
             ->route('moderator.exercises.review.index')
             ->with('success', $isApproved
@@ -60,18 +59,13 @@ class ModeratorExerciseReviewController extends Controller
     public function resolve(DuplicateAlert $duplicateAlert): RedirectResponse
     {
         $this->exerciseReviewService->markAsResolved($duplicateAlert);
-
-        return redirect()
-            ->route('moderator.exercises.review.index')
-            ->with('success', 'Alerta marcada como resuelta.');
+        return redirect()->route('moderator.exercises.review.index')->with('success', 'Alerta marcada como resuelta.');
     }
 
     public function rejectNewExercise(DuplicateAlert $duplicateAlert): RedirectResponse
     {
         $this->exerciseReviewService->rejectNewExerciseFromAlert($duplicateAlert, auth()->id());
-
-        return redirect()->route('moderator.exercises.review.index')
-            ->with('success', 'Ejercicio nuevo rechazado por duplicado y alerta resuelta.');
+        return redirect()->route('moderator.exercises.review.index')->with('success', 'Ejercicio nuevo rechazado por duplicado y alerta resuelta.');
     }
 
 }

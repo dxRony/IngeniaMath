@@ -11,9 +11,9 @@ use Illuminate\View\View;
 
 class RegisterController extends Controller
 {
-    public function __construct(
-        private RegisterService $registerService
-    ) {}
+    public function __construct(private RegisterService $registerService)
+    {
+    }
 
     public function index(): View
     {
@@ -22,6 +22,7 @@ class RegisterController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        //validando form de registro
         $request->validate([
             'first_name' => 'required|string|max:100',
             'last_name' => 'required|string|max:100',

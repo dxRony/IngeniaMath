@@ -54,7 +54,7 @@ class PracticeSession extends Model
 
     public function initialDifficulty(): BelongsTo
     {
-        return $this->belongsTo(DifficultyLevel::class, 'initial_difficulty_id', 'id');
+        return $this->belongsTo(ExerciseLevel::class, 'initial_difficulty_id', 'id');
     }
 
     public function status(): BelongsTo

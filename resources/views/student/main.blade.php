@@ -26,4 +26,14 @@
         Foro
     </a>
 </li>
+
+<li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle text-white" href="#" role="button" data-bs-toggle="dropdown">
+        Práctica
+    </a>
+    <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="{{ route('student.practice.index') }}">Iniciar sesion de práctica</a></li>
+        <li><a class="dropdown-item" href="{{ route('student.practice.sessions') }}">Ver mis sesiones</a></li>
+    </ul>
+</li>
 @endsection
