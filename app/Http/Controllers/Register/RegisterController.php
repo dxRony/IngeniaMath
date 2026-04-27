@@ -6,15 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Services\Register\RegisterService;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class RegisterController extends Controller
 {
     public function __construct(
         private RegisterService $registerService
-    )
-    {
-    }
+    ) {}
 
     public function index(): View
     {
@@ -30,9 +29,10 @@ class RegisterController extends Controller
             'password' => 'required|min:6|confirmed',
         ]);
 
-        $this->registerService->registerStudent($request);
+        $user = $this->registerService->registerStudent($request);
 
-        return redirect()->route('login.index')
-            ->with('success', 'Estudiante registrado correctamente. Puedes iniciar sesión.');
+        Auth::login($user);
+
+        return redirect()->route('initial-assessments.index');
     }
 }
