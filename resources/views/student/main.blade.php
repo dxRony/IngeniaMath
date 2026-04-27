@@ -12,13 +12,18 @@
     </a>
 </li>
 <li class="nav-item">
-    <a class="nav-link text-white" href="{{ route('student.forum.index') }}">
-        Foro
+    <a class="nav-link text-white" href="{{ route('learning-paths.index') }}">
+        Ruta de aprendizaje
     </a>
 </li>
 <li class="nav-item">
     <a class="nav-link text-white" href="{{ route('initial-assessments.results') }}">
         Examen diagnóstico
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link text-white" href="{{ route('student.forum.index') }}">
+        Foro
     </a>
 </li>
 @endsection

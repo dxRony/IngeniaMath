@@ -1,23 +1,22 @@
-@extends('layouts.app')
+@extends('layouts.assessment')
 
 @section('content')
-<div style="max-width: 720px; margin: 0 auto; padding: 2rem 1.5rem;">
+<div class="container py-4" style="max-width: 820px;">
 
     {{-- Barra de progreso --}}
     @php $current = $assessmentExercises->search(fn($i) => is_null($i->given_answer)) + 1 ??
     $assessmentExercises->count(); @endphp
-    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem;">
-        <div style="flex: 1; max-width: 320px;">
-            <p style="font-size: 13px; color: #6b7280; margin: 0 0 6px;">
+    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-4">
+        <div class="w-100" style="max-width: 420px;">
+            <p class="small text-muted mb-2">
                 Pregunta <span id="js-current">1</span> de {{ $assessmentExercises->count() }}
             </p>
-            <div style="height: 4px; background: #f3f4f6; border-radius: 2px; overflow: hidden;">
-                <div id="js-bar" style="height: 100%; background: #111827; border-radius: 2px;
-                                width: {{ round(1 / $assessmentExercises->count() * 100, 1) }}%;
-                                transition: width 0.3s;"></div>
+            <div class="progress" style="height: 6px;">
+                <div id="js-bar" class="progress-bar bg-dark" role="progressbar"
+                    style="width: {{ round(1 / $assessmentExercises->count() * 100, 1) }}%; transition: width 0.3s;"></div>
             </div>
         </div>
-        <span id="js-remaining" style="font-size: 13px; color: #6b7280;">
+        <span id="js-remaining" class="small text-muted">
             {{ $assessmentExercises->count() - 1 }} restantes
         </span>
     </div>
@@ -31,30 +30,28 @@
         <div class="exercise-pane" id="pane-{{ $index }}" style="{{ $index > 0 ? 'display:none;' : '' }}">
 
             {{-- Card del ejercicio --}}
-            <div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
-                  padding: 1.5rem; margin-bottom: 1.5rem;">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
 
                 {{-- Badges: módulo y dificultad --}}
-                <div style="display: flex; gap: 8px; margin-bottom: 1rem;">
-                    <span style="font-size: 12px; padding: 3px 10px; border-radius: 20px;
-                       background: #f3f4f6; color: #6b7280;">
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                    <span class="badge rounded-pill text-bg-light border text-secondary">
                         {{ $item->exercise->subtopic->topic->name }}
                     </span>
-                    <span style="font-size: 12px; padding: 3px 10px; border-radius: 20px;
-                       background: #f3f4f6; color: #6b7280;">
+                    <span class="badge rounded-pill text-bg-light border text-secondary">
                         {{ $item->exercise->level->name }}
                     </span>
                 </div>
 
                 {{-- Enunciado --}}
-                <p style="font-size: 16px; line-height: 1.6; margin: 0 0 1.25rem;">
+                <p class="fs-6 lh-lg mb-4">
                     {!! $item->exercise->statement !!}
                 </p>
 
                 {{-- Imagen opcional --}}
                 @if($item->exercise->image_url)
-                <img src="{{ Storage::url($item->exercise->image_url) }}" alt="Imagen de apoyo" style="width: 100%; max-height: 220px; object-fit: contain;
-                    border-radius: 8px; border: 1px solid #e5e7eb; margin-bottom: 1.25rem;">
+                <img src="{{ Storage::url($item->exercise->image_url) }}" alt="Imagen de apoyo"
+                    class="img-fluid rounded border mb-4" style="max-height: 220px; object-fit: contain; width: 100%;">
                 @endif
 
                 {{-- Input según tipo --}}
@@ -77,26 +74,22 @@
                 'item' => $item, 'index' => $index
                 ])
                 @endif
+                </div>
 
             </div>
         </div>
         @endforeach
 
         {{-- Navegación --}}
-        <div style="display: flex; justify-content: flex-end; gap: 10px;">
-            <button type="button" id="btn-prev" onclick="navigate(-1)" style="padding: 0.625rem 1.5rem; border-radius: 8px; font-size: 15px;
-                     font-weight: 500; border: 1px solid #d1d5db; background: transparent;
-                     cursor: pointer; display: none;">
+        <div class="d-flex justify-content-end gap-2">
+            <button type="button" id="btn-prev" onclick="navigate(-1)" class="btn btn-outline-secondary"
+                style="display: none;">
                 Anterior
             </button>
-            <button type="button" id="btn-next" onclick="navigate(1)" style="padding: 0.625rem 1.5rem; border-radius: 8px; font-size: 15px;
-                     font-weight: 500; background: #111827; color: #fff;
-                     border: none; cursor: pointer;">
+            <button type="button" id="btn-next" onclick="navigate(1)" class="btn btn-dark">
                 Siguiente
             </button>
-            <button type="submit" id="btn-submit" style="padding: 0.625rem 1.5rem; border-radius: 8px; font-size: 15px;
-                     font-weight: 500; background: #111827; color: #fff;
-                     border: none; cursor: pointer; display: none;">
+            <button type="submit" id="btn-submit" class="btn btn-dark" style="display: none;">
                 Finalizar diagnóstico
             </button>
         </div>
@@ -104,30 +97,6 @@
     </form>
 </div>
 
-{{-- @push('scripts')
-<script>
-    const total = {{ $assessmentExercises->count() }};
-  let current = 0;
-
-  function navigate(dir) {
-    document.getElementById('pane-' + current).style.display = 'none';
-    current = Math.min(Math.max(0, current + dir), total - 1);
-    document.getElementById('pane-' + current).style.display = 'block';
-    updateUI();
-  }
-
-  function updateUI() {
-    document.getElementById('js-current').textContent = current + 1;
-    document.getElementById('js-remaining').textContent = (total - current - 1) + ' restantes';
-    document.getElementById('js-bar').style.width = (((current + 1) / total) * 100).toFixed(1) + '%';
-    document.getElementById('btn-prev').style.display  = current === 0 ? 'none' : 'inline-block';
-    document.getElementById('btn-next').style.display  = current === total - 1 ? 'none' : 'inline-block';
-    document.getElementById('btn-submit').style.display = current === total - 1 ? 'inline-block' : 'none';
-  }
-
-  updateUI();
-</script>
-@endpush --}}
 <script>
   const total = {{ $assessmentExercises->count() }};
   let current = 0;

@@ -116,7 +116,7 @@ class InitialAssessmentController extends Controller
 
         if (!$assessment->is_completed) {
             return redirect()->route('initial-assessments.show', $assessment->id);
-        }   
+        }
 
         $moduleResults = AssessmentModuleResult::where('assessment_id', $assessment->id)
             ->with(['topic', 'masteryLevel'])
@@ -130,6 +130,34 @@ class InitialAssessmentController extends Controller
             'moduleResults'  => $moduleResults,
             'totalExercises' => $totalExercises,
             'totalCorrect'   => $totalCorrect,
+        ]);
+    }
+
+    public function review(string $id, int $order = 1)
+    {
+        $assessment = InitialAssessment::findOrFail($id);
+
+        if ($assessment->student_id !== Auth::id()) {
+            abort(403);
+        }
+
+        if (!$assessment->is_completed) {
+            return redirect()->route('initial-assessments.show', $assessment->id);
+        }
+
+        $total = $assessment->assessmentExercises()->count();
+        $order = max(1, min($order, $total));
+
+        $item = $assessment->assessmentExercises()
+            ->with(['exercise.type', 'exercise.subtopic.topic', 'exercise.level', 'exercise.steps'])
+            ->where('order', $order)
+            ->firstOrFail();
+
+        return view('student.initial-assessments.review', [
+            'assessment' => $assessment,
+            'item'       => $item,
+            'order'      => $order,
+            'total'      => $total,
         ]);
     }
 

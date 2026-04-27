@@ -79,6 +79,11 @@
               border-radius: 8px; font-size: 15px; font-weight: 500; text-decoration: none;">
             Ver ruta de aprendizaje generada
         </a>
+        <a href="{{ route('initial-assessments.review', [$assessment->id, 1]) }}" style="padding: 0.625rem 1.75rem; background: transparent; color: #111827;
+            border-radius: 8px; font-size: 15px; font-weight: 500;
+            text-decoration: none; border: 1px solid #d1d5db;">
+            Revisar ejercicios
+        </a>
     </div>
 
 </div>
