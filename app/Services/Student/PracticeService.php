@@ -192,7 +192,7 @@ class PracticeService
             $this->updateSessionTotals($session);
             $this->updateSubtopicProgress($studentId, $exercise, $isCorrect);
             $this->updateSessionTopicSummary($session, $exercise);
-
+            $this->finishSessionIfCompleted($session);
             return $sessionExercise->refresh();
         });
     }
@@ -414,5 +414,21 @@ class PracticeService
             'status',
             'sessionExercises',
         ])->where('student_id', $studentId)->latest('started_at')->get();
+    }
+
+    private function finishSessionIfCompleted(PracticeSession $session): void
+    {
+        //obteniendo total de ejercicios de la sesion
+        $totalExercises = SessionExercise::where('session_id', $session->id)->count();
+        //obteniendo los ejercisios respondidos de la sesion
+        $answeredExercises = SessionExercise::where('session_id', $session->id)->whereNotNull('answered_at')->count();
+        //si no se han completado los ejercicios no pasa nada
+        if ($totalExercises === 0 || $answeredExercises < $totalExercises) {
+            return;
+        }
+        //obteniendo estado finalizada
+        $finishedStatus = PracticeStatus::where('name', 'Finalizada')->firstOrFail();
+        //si ya se resolvieron los ejercicios, se actualiza el estado de la sesion
+        $session->update(['status_id' => $finishedStatus->id, 'ended_at' => now(),]);
     }
 }

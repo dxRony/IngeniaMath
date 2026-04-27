@@ -28,8 +28,65 @@
             @if($exercises->isEmpty())
                 <p class="mb-0">Aún no has creado ejercicios.</p>
             @else
+                <div class="card mb-4 border-0 bg-light">
+                    <div class="card-body">
+                        <h5 class="fw-bold mb-3">Filtros</h5>
+
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label class="form-label">Módulo</label>
+                                <select id="filter-topic" class="form-select">
+                                    <option value="">Todos</option>
+                                    @foreach($exercises->pluck('subtopic.topic.name')->unique()->sort() as $topicName)
+                                        <option value="{{ $topicName }}">{{ $topicName }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="col-md-2">
+                                <label class="form-label">Nivel</label>
+                                <select id="filter-level" class="form-select">
+                                    <option value="">Todos</option>
+                                    @foreach($exercises->pluck('level.name')->unique()->sort() as $levelName)
+                                        <option value="{{ $levelName }}">{{ $levelName }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="col-md-2">
+                                <label class="form-label">Tipo</label>
+                                <select id="filter-type" class="form-select">
+                                    <option value="">Todos</option>
+                                    @foreach($exercises->pluck('type.name')->unique()->sort() as $typeName)
+                                        <option value="{{ $typeName }}">{{ $typeName }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="col-md-2">
+                                <label class="form-label">Estado</label>
+                                <select id="filter-status" class="form-select">
+                                    <option value="">Todos</option>
+                                    @foreach($exercises->pluck('status.name')->unique()->sort() as $statusName)
+                                        <option value="{{ $statusName }}">{{ $statusName }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <small class="text-muted">
+                                Mostrando <span id="visible-count">{{ $exercises->count() }}</span> de {{ $exercises->count() }} ejercicios.
+                            </small>
+
+                            <button type="button" id="clear-filters" class="btn btn-sm btn-outline-secondary">
+                                Limpiar filtros
+                            </button>
+                        </div>
+                    </div>
+                </div>
                 <div class="table-responsive">
-                    <table class="table align-middle">
+                    <table class="table align-middle" id="exercises-table">
                         <thead>
                         <tr>
                             <th>ID</th>
@@ -47,7 +104,13 @@
                             @php
                                 $latestReview = $exercise->reviews->sortByDesc('reviewed_at')->first();
                             @endphp
-                            <tr>
+                            <tr
+                                class="exercise-row"
+                                data-topic="{{ $exercise->subtopic->topic->name }}"
+                                data-level="{{ $exercise->level->name }}"
+                                data-type="{{ $exercise->type->name }}"
+                                data-status="{{ $exercise->status->name }}"
+                            >
                                 <td>{{ $exercise->id }}</td>
                                 <td>{{ $exercise->subtopic->topic->name }}</td>
                                 <td>{{ $exercise->subtopic->name }}</td>
@@ -107,8 +170,60 @@
                         @endforeach
                         </tbody>
                     </table>
+                    <div id="no-results-message" class="alert alert-info d-none mt-3">
+                        No se encontraron ejercicios con los filtros seleccionados.
+                    </div>
                 </div>
             @endif
         </div>
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const filters = {
+                topic: document.getElementById('filter-topic'),
+                level: document.getElementById('filter-level'),
+                type: document.getElementById('filter-type'),
+                status: document.getElementById('filter-status'),
+            };
+
+            const rows = document.querySelectorAll('.exercise-row');
+            const visibleCount = document.getElementById('visible-count');
+            const clearButton = document.getElementById('clear-filters');
+            const noResultsMessage = document.getElementById('no-results-message');
+
+            function applyFilters() {
+                let count = 0;
+
+                rows.forEach(row => {
+                    const matchesTopic = !filters.topic.value || row.dataset.topic === filters.topic.value;
+                    const matchesLevel = !filters.level.value || row.dataset.level === filters.level.value;
+                    const matchesType = !filters.type.value || row.dataset.type === filters.type.value;
+                    const matchesStatus = !filters.status.value || row.dataset.status === filters.status.value;
+
+                    const isVisible = matchesTopic  && matchesLevel && matchesType && matchesStatus;
+
+                    row.classList.toggle('d-none', !isVisible);
+
+                    if (isVisible) {
+                        count++;
+                    }
+                });
+
+                visibleCount.textContent = count;
+                noResultsMessage.classList.toggle('d-none', count > 0);
+            }
+
+            Object.values(filters).forEach(select => {
+                select.addEventListener('change', applyFilters);
+            });
+
+            clearButton.addEventListener('click', function () {
+                Object.values(filters).forEach(select => {
+                    select.value = '';
+                });
+
+                applyFilters();
+            });
+        });
+    </script>
 @endsection
