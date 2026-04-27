@@ -23,7 +23,7 @@
             simulacros y seguimiento personalizado.
         </p>
 
-        <a href="{{ route('login.index') }}" class="btn btn-primary mt-4">
+        <a href="{{ route('login') }}" class="btn btn-primary mt-4">
             Iniciar sesión
         </a>
 

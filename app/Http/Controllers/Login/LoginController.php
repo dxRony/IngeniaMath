@@ -45,6 +45,6 @@ class LoginController extends Controller
     {
         //realizando logout
         $this->loginService->logout($request);
-        return redirect()->route('login.index');
+        return redirect()->route('login');
     }
 }

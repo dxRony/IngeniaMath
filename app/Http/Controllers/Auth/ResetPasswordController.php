@@ -41,7 +41,7 @@ class ResetPasswordController extends Controller
 
         if ($status === Password::PASSWORD_RESET) {
             return redirect()
-                ->route('login.index')
+                ->route('login')
                 ->with('success', 'Tu contraseña se actualizó correctamente. Ya puedes iniciar sesión.');
         }
 

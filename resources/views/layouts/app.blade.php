@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,36 +14,36 @@
 
 <body class="d-flex flex-column min-vh-100 bg-light">
 
-<nav class="navbar navbar-expand-lg navbar-dark @yield('navbar-color')">
-    <div class="container-fluid">
-        <a class="navbar-brand fw-bold text-warning" href="@yield('home-route')">
-            IngeniaMath
-        </a>
+    <nav class="navbar navbar-expand-lg navbar-dark @yield('navbar-color')">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold text-warning" href="@yield('home-route')">
+                IngeniaMath
+            </a>
 
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
-            <span class="navbar-toggler-icon"></span>
-        </button>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
+                <span class="navbar-toggler-icon"></span>
+            </button>
 
-        <div class="collapse navbar-collapse" id="navbarMain">
-            @auth
+            <div class="collapse navbar-collapse" id="navbarMain">
+                @auth
                 @if(auth()->user()->is_active)
-                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                        @yield('menu')
-                    </ul>
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    @yield('menu')
+                </ul>
                 @else
-                    <ul class="navbar-nav me-auto mb-2 mb-lg-0"></ul>
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0"></ul>
                 @endif
-            @endauth
+                @endauth
 
-            @auth
+                @auth
                 <ul class="navbar-nav ms-auto align-items-lg-center">
                     @if(auth()->user()->is_active)
-                        <li class="nav-item">
-                            <a class="nav-link text-white" href="{{ route('profile.show') }}">Mi perfil</a>
-                        </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{{ route('profile.show') }}">Mi perfil</a>
+                    </li>
                     @endif
                     <li class="nav-item">
-                        <form method="POST" action="{{ route('logout') }}">
+                        <form method="POST" action="{{ route('logout') }}" class="d-inline">
                             @csrf
                             <button type="submit" class="btn btn-link nav-link text-warning fw-bold">
                                 Cerrar sesión
@@ -50,24 +51,24 @@
                         </form>
                     </li>
                 </ul>
-            @endauth
+                @endauth
 
+            </div>
         </div>
-    </div>
-</nav>
+    </nav>
 
-<main class="container my-4 flex-grow-1">
-    @yield('content')
-</main>
+    <main class="container my-4 flex-grow-1">
+        @yield('content')
+    </main>
 
-<footer class="@yield('footer-color') text-white text-center py-3 mt-auto">
-    <small>IngeniaMath - Proyecto TS2</small>
-</footer>
+    <footer class="@yield('footer-color') text-white text-center py-3 mt-auto">
+        <small>IngeniaMath - Proyecto TS2</small>
+    </footer>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-<script>
-    window.MathJax = {
+    <script>
+        window.MathJax = {
         tex: {
             inlineMath: [['\\(', '\\)'], ['$', '$']],
             displayMath: [['\\[', '\\]'], ['$$', '$$']]
@@ -76,12 +77,15 @@
             fontCache: 'global'
         }
     };
-</script>
-<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
 
-@yield('scripts')
+    @yield('scripts')
+    @stack('scripts')
 </body>
+
 </html>
 
 </body>
+
 </html>

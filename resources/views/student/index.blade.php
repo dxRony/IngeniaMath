@@ -195,7 +195,11 @@
   for (let i = 89; i >= 0; i--) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
-    const key = d.toISOString().split('T')[0];
+    const key = [
+      d.getFullYear(),
+      String(d.getMonth() + 1).padStart(2, '0'),
+      String(d.getDate()).padStart(2, '0'),
+    ].join('-');
     const sessions = activityDays[key] || 0;
     const intensity = sessions === 0 ? 0 : Math.min(sessions, 4);
     const cell = document.createElement('div');

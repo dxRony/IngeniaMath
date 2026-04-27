@@ -4,6 +4,8 @@ namespace App\Services\Student;
 
 use App\Models\Exercise;
 use App\Models\ExerciseLevel;
+use App\Models\MasteryLevel;
+use App\Models\ModuleProgress;
 use App\Models\PracticeSession;
 use App\Models\PracticeStatus;
 use App\Models\SessionExercise;
@@ -14,6 +16,7 @@ use App\Models\SavedExercise;
 use App\Models\SessionTopicSummary;
 use App\Models\SubtopicLevelProgress;
 use App\Models\LearningPath;
+use App\Models\InitialAssessment;
 
 class PracticeService
 {
@@ -393,9 +396,10 @@ class PracticeService
         });
     }
 
-    private function validateSessionExerciseBelongsToSession(PracticeSession $session, SessionExercise $sessionExercise
-    ): void
-    {
+    private function validateSessionExerciseBelongsToSession(
+        PracticeSession $session,
+        SessionExercise $sessionExercise
+    ): void {
         if ((int)$sessionExercise->session_id !== (int)$session->id) {
             abort(404);
         }
@@ -610,6 +614,29 @@ class PracticeService
         $finishedStatus = PracticeStatus::where('name', 'Finalizada')->firstOrFail();
         //si ya se resolvieron los ejercicios, se actualiza el estado de la sesion
         $session->update(['status_id' => $finishedStatus->id, 'ended_at' => now(),]);
+
+        $completedSession = $session->fresh();
+        $score = $completedSession->total_exercises > 0
+            ? round(($completedSession->total_correct / $completedSession->total_exercises) * 100, 2)
+            : 0;
+
+        $masteryLevelId = $this->resolveMasteryLevel($score);
+
+        ModuleProgress::create([
+            'student_id' => $completedSession->student_id,
+            'topic_id' => $completedSession->topic_id,
+            'mastery_level_id' => $masteryLevelId,
+            'score' => $score,
+        ]);
+    }
+
+    private function resolveMasteryLevel(float $score): int
+    {
+        $level = MasteryLevel::where('min_threshold', '<=', $score)
+            ->where('max_threshold', '>=', $score)
+            ->first();
+
+        return $level?->id ?? MasteryLevel::orderBy('min_threshold')->first()->id;
     }
 
     private function getStudentSubtopicAccuracy(int $studentId, int $subtopicId): float
@@ -635,6 +662,4 @@ class PracticeService
 
         return round(($correct / $total) * 100, 2);
     }
-
-
 }

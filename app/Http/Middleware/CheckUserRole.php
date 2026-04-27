@@ -12,7 +12,7 @@ class CheckUserRole
     public function handle(Request $request, Closure $next, int $roleId): Response
     {
         if (!Auth::check()) {
-            return redirect()->route('login.index');
+            return redirect()->route('login');
         }
 
         $user = Auth::user();

@@ -43,13 +43,9 @@
 </li>
 
 <li class="nav-item">
-
-    <a class="nav-link text-white" href="{{ route('student.resources.index') }}">
-
+    <a href="#" class="nav-link text-white" data-bs-toggle="modal" data-bs-target="#resourcesModal">
         Recursos
-    
     </a>
-
 </li>
 
 <li class="nav-item dropdown">
@@ -62,3 +58,11 @@
     </ul>
 </li>
 @endsection
+
+
+{{-- Incluir el modal globalmente vía @push para que viaje al final del layout --}}
+@push('scripts')
+{{-- placeholder, los scripts del modal vienen del partial --}}
+@endpush
+
+@include('student.partials._resources_modal')

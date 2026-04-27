@@ -146,7 +146,7 @@
     <div class="divider my-3"></div>
 
     <p class="footer-text text-center mb-0">
-        ¿Ya tienes cuenta? <a href="{{ route('login.index') }}">Iniciar sesión</a>
+        ¿Ya tienes cuenta? <a href="{{ route('login') }}">Iniciar sesión</a>
     </p>
 </div>
 

@@ -43,10 +43,14 @@
                     </span>
                 </div>
 
+                @php $typeName = $item->exercise->type->name; @endphp
+
                 {{-- Enunciado --}}
+                @if($typeName !== 'Completar espacios')
                 <p class="fs-6 lh-lg mb-4">
                     {!! $item->exercise->statement !!}
                 </p>
+                @endif
 
                 {{-- Imagen opcional --}}
                 @if($item->exercise->image_url)
@@ -55,8 +59,6 @@
                 @endif
 
                 {{-- Input según tipo --}}
-                @php $typeName = $item->exercise->type->name; @endphp
-
                 @if($typeName === 'Opción múltiple')
                 @include('student.initial-assessments.partials._multiple_choice', [
                 'item' => $item, 'index' => $index

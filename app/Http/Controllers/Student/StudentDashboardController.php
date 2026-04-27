@@ -102,18 +102,21 @@ class StudentDashboardController extends Controller
         $progressOverTime = ModuleProgress::where('student_id', $studentId)
             ->select(
                 DB::raw('YEAR(created_at) as year'),
-                DB::raw('WEEK(created_at) as week'),
+                DB::raw('WEEK(created_at, 1) as week'),
                 DB::raw('AVG(score) as avg_score'),
                 DB::raw('MIN(created_at) as week_start')
             )
             ->groupBy('year', 'week')
-            ->orderBy('week_start')
+            ->orderBy('year')
+            ->orderBy('week')
             ->get();
 
-        $lineLabels = $progressOverTime->map(
-            fn($r) =>
-            \Carbon\Carbon::parse($r->week_start)->locale('es')->isoFormat('D MMM')
-        )->toArray();
+        $lineLabels = $progressOverTime->map(function ($r) {
+            $start = \Carbon\Carbon::parse($r->week_start)->startOfWeek()->locale('es');
+            $end = (clone $start)->addDays(6)->locale('es');
+            return 'Semana del ' . $start->isoFormat('D MMM') . ' — ' . $end->isoFormat('D MMM');
+        })->toArray();
+
         $lineData = $progressOverTime->map(fn($r) => round($r->avg_score, 1))->toArray();
 
         // --- Top 3 módulos con mayor tasa de error ---
@@ -144,6 +147,21 @@ class StudentDashboardController extends Controller
             ->groupBy('day')
             ->pluck('sessions', 'day');
 
+        $mockExamDays = DB::table('mock_exams')
+            ->where('student_id', $studentId)
+            ->whereNotNull('ended_at')
+            ->select(DB::raw('DATE(started_at) as day'), DB::raw('COUNT(*) as sessions'))
+            ->groupBy('day')
+            ->pluck('sessions', 'day');
+
+        $activityDays = collect($activityDays->all());
+
+        foreach ($mockExamDays as $day => $sessions) {
+            $activityDays[$day] = ($activityDays[$day] ?? 0) + $sessions;
+        }
+
+        $activityDays = $activityDays->sortKeys();
+
         return view('student.index', compact(
             'totalExercises',
             'totalMockExams',
@@ -165,20 +183,32 @@ class StudentDashboardController extends Controller
 
     private function calculateStreak(int $studentId): int
     {
-        $days = DB::table('practice_sessions')
+        $practiceDays = DB::table('practice_sessions')
             ->where('student_id', $studentId)
             ->whereNotNull('ended_at')
             ->select(DB::raw('DATE(started_at) as day'))
             ->distinct()
-            ->orderByDesc('day')
-            ->pluck('day')
+            ->pluck('day');
+
+        $mockExamDays = DB::table('mock_exams')
+            ->where('student_id', $studentId)
+            ->whereNotNull('ended_at')
+            ->select(DB::raw('DATE(started_at) as day'))
+            ->distinct()
+            ->pluck('day');
+
+        $days = $practiceDays
+            ->merge($mockExamDays)
+            ->unique()
+            ->sortDesc()
+            ->values()
             ->map(fn($d) => \Carbon\Carbon::parse($d));
 
         if ($days->isEmpty()) return 0;
 
         $streak = 1;
         for ($i = 0; $i < $days->count() - 1; $i++) {
-            if ($days[$i]->diffInDays($days[$i + 1]) === 1) {
+            if ((int) abs($days[$i]->diffInDays($days[$i + 1])) === 1) {
                 $streak++;
             } else {
                 break;
@@ -218,6 +248,13 @@ class StudentDashboardController extends Controller
             ->whereNotNull('se.is_correct')
             ->select('e.subtopic_id', 'se.is_correct');
 
-        return $assessmentExercises->unionAll($sessionExercises);
+        $mockExamExercises = DB::table('mock_exam_exercises as mee')
+            ->join('mock_exams as me', 'mee.exam_id', '=', 'me.id')
+            ->join('exercises as e', 'mee.exercise_id', '=', 'e.id')
+            ->where('me.student_id', $studentId)
+            ->whereNotNull('mee.is_correct')
+            ->select('e.subtopic_id', 'mee.is_correct');
+
+        return $assessmentExercises->unionAll($sessionExercises)->unionAll($mockExamExercises);
     }
 }

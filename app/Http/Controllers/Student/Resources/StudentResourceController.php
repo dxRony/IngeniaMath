@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Services\Student\Resources\StudentResourceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
 
 class StudentResourceController extends Controller
 {
@@ -15,24 +14,42 @@ class StudentResourceController extends Controller
     ) {}
 
     /**
-     * Listado de recursos aprobados con filtro por módulo.
+     * Devuelve el listado de recursos aprobados (JSON).
+     * Usado por el modal del navbar.
      */
-    public function index(Request $request): View
+    public function index(Request $request): JsonResponse
     {
         $topicId = $request->input('topic') ? (int) $request->input('topic') : null;
+        $page    = (int) $request->input('page', 1);
 
-        $resources = $this->resourceService->getApprovedResources($topicId);
+        $resources = $this->resourceService->getApprovedResources($topicId, 12);
         $topics    = $this->resourceService->getTopicsWithCounts();
 
-        return view('student.resources.index', [
-            'resources'      => $resources,
-            'topics'         => $topics,
-            'selectedTopic'  => $topicId,
+        return response()->json([
+            'resources' => $resources->getCollection()->map(fn($r) => [
+                'id'        => $r->id,
+                'title'     => $r->title,
+                'type_id'   => $r->type_id,
+                'type_name' => $r->type?->name,
+                'icon'      => $this->getIcon($r->type_id),
+            ]),
+            'pagination' => [
+                'current_page' => $resources->currentPage(),
+                'last_page'    => $resources->lastPage(),
+                'total'        => $resources->total(),
+                'has_pages'    => $resources->hasPages(),
+            ],
+            'topics' => $topics->map(fn($t) => [
+                'id'    => $t->id,
+                'name'  => $t->name,
+                'count' => $t->count,
+            ]),
+            'selected_topic' => $topicId,
         ]);
     }
 
     /**
-     * Devuelve los datos de un recurso para mostrarlo en el modal (JSON).
+     * Devuelve los datos de un recurso específico (JSON).
      */
     public function show(int $id): JsonResponse
     {
@@ -57,5 +74,16 @@ class StudentResourceController extends Controller
                 'back_text'  => $f->back_text,
             ]),
         ]);
+    }
+
+    private function getIcon(int $typeId): string
+    {
+        return match($typeId) {
+            1 => '🎬',
+            2 => '📄',
+            3 => '🃏',
+            4 => '📐',
+            default => '📎',
+        };
     }
 }

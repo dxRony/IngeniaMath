@@ -48,7 +48,7 @@
     </form>
 
     <div class="text-center mt-3">
-        <a href="{{ route('login.index') }}">Regresar</a>
+        <a href="{{ route('login') }}">Regresar</a>
     </div>
 </div>
 
