@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\ExamConfigController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\ResetPasswordController;
@@ -14,6 +15,7 @@ use App\Http\Controllers\Moderator\ModeratorExerciseReviewController;
 use App\Http\Controllers\Moderator\Resources\ResourceReviewController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Register\RegisterController;
+use App\Http\Controllers\Student\MockExams\MockExamController;
 use App\Http\Controllers\Student\StudentDashboardController;
 use App\Http\Controllers\Student\StudentPracticeController;
 use App\Http\Controllers\Tutor\Resources\ResourceController;
@@ -59,6 +61,19 @@ Route::prefix('admin')->middleware(['auth', 'active', 'role:1'])->group(function
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
     Route::patch('/users/{user}/toggle-state', [UserController::class, 'toggleState'])->name('users.toggle-state');
     Route::resource('/users', UserController::class);
+
+    // Configuracion de simulacros
+    Route::prefix('exam-configs')->name('admin.exam-configs.')->group(function () {
+        Route::get('/',                   [ExamConfigController::class, 'index'])->name('index');
+        Route::get('/create',             [ExamConfigController::class, 'create'])->name('create');
+        Route::post('/',                  [ExamConfigController::class, 'store'])->name('store');
+        Route::get('/{id}/edit',          [ExamConfigController::class, 'edit'])->name('edit')->whereNumber('id');
+        Route::put('/{id}',               [ExamConfigController::class, 'update'])->name('update')->whereNumber('id');
+        Route::patch('/{id}/activate',    [ExamConfigController::class, 'activate'])->name('activate')->whereNumber('id');
+        Route::patch('/{id}/deactivate',  [ExamConfigController::class, 'deactivate'])->name('deactivate')->whereNumber('id');
+    });
+
+
 });
 
 // Moderator
@@ -152,7 +167,7 @@ Route::prefix('student')->middleware(['auth', 'active', 'role:4', 'assessment.co
     Route::get('/sessions/{session}/exercises/{sessionExercise}', [StudentPracticeController::class, 'showExercise'])->name('student.practice.exercises.show');
     Route::post('/sessions/{session}/exercises/{sessionExercise}/answer', [StudentPracticeController::class, 'answer'])->name('student.practice.exercises.answer');
     Route::post('/sessions/{session}/exercises/{sessionExercise}/save', [StudentPracticeController::class, 'saveExercise'])->name('student.practice.exercises.save');
-  
+
     // Examen diagnóstico
     Route::get('/initial-assessments/results', [InitialAssessmentController::class, 'results'])
         ->name('initial-assessments.results');
@@ -163,8 +178,21 @@ Route::prefix('student')->middleware(['auth', 'active', 'role:4', 'assessment.co
     Route::get('/learning-paths', [LearningPathController::class, 'index'])
         ->name('learning-paths.index');
 
+// Simulacros de examen
+    Route::prefix('mock-exams')->name('student.mock-exams.')->group(function () {
+        Route::get('/',                     [MockExamController::class, 'startForm'])->name('start-form');
+        Route::post('/start',               [MockExamController::class, 'start'])->name('start');
+
+        Route::get('/{id}/take/{order}',    [MockExamController::class, 'take'])->name('take')->whereNumber('id')->whereNumber('order');
+        Route::post('/{id}/answer/{order}', [MockExamController::class, 'answer'])->name('answer')->whereNumber('id')->whereNumber('order');
+        Route::get('/{id}/finish',          [MockExamController::class, 'finish'])->name('finish')->whereNumber('id');
+        Route::get('/{id}/results',         [MockExamController::class, 'results'])->name('results')->whereNumber('id');
+    });
+
+
     // Plan semanal
     Route::resource('/weekly-plans', WeeklyPlanController::class);
+
 });
 
 // Student — rutas del diagnóstico (SIN assessment.completed)
