@@ -17,6 +17,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Register\RegisterController;
 use App\Http\Controllers\Student\MockExams\MockExamController;
 use App\Http\Controllers\Student\MockExams\MockExamHistoryController;
+use App\Http\Controllers\Student\Resources\StudentResourceController;
 use App\Http\Controllers\Student\StudentDashboardController;
 use App\Http\Controllers\Student\StudentPracticeController;
 use App\Http\Controllers\Tutor\Resources\ResourceController;
@@ -201,4 +202,11 @@ Route::prefix('student')->middleware(['auth', 'active', 'role:4', 'assessment.co
 // Student — rutas del diagnóstico (SIN assessment.completed)
 Route::prefix('student')->middleware(['auth', 'active', 'role:4'])->group(function () {
     Route::resource('/initial-assessments', InitialAssessmentController::class);
+
+    // Recursos educativos
+    Route::prefix('resources')->name('student.resources.')->group(function () {
+        Route::get('/',     [StudentResourceController::class, 'index'])->name('index');
+        Route::get('/{id}', [StudentResourceController::class, 'show'])->name('show')->whereNumber('id');
+    });
+
 });
