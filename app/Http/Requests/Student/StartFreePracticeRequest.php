@@ -14,9 +14,10 @@ class StartFreePracticeRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'topic_id' => ['required', 'exists:topics,id'],
+            'mode_id' => ['required', 'exists:session_modes,id'],
+            'topic_id' => ['nullable', 'exists:topics,id'],
             'subtopic_id' => ['nullable', 'exists:subtopics,id'],
-            'level_id' => ['required', 'exists:exercise_levels,id'],
+            'level_id' => ['nullable', 'exists:exercise_levels,id'],
             'quantity' => ['required', 'integer', 'min:1', 'max:20'],
         ];
     }

@@ -34,6 +34,16 @@
 
 <li class="nav-item dropdown">
     <a class="nav-link dropdown-toggle text-white" href="#" role="button" data-bs-toggle="dropdown">
+        Simulacros
+    </a>
+    <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="{{ route('student.mock-exams.start-form') }}">Iniciar nuevo</a></li>
+        <li><a class="dropdown-item" href="{{ route('student.mock-exams.history') }}">Historial</a></li>
+    </ul>
+</li>
+
+<li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle text-white" href="#" role="button" data-bs-toggle="dropdown">
         Práctica
     </a>
     <ul class="dropdown-menu">

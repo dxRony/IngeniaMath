@@ -12,6 +12,7 @@ use App\Services\Student\PracticeService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use App\Http\Requests\Student\AnswerPracticeExerciseRequest;
+use App\Models\SessionMode;
 
 
 class StudentPracticeController extends Controller
@@ -24,11 +25,11 @@ class StudentPracticeController extends Controller
 
     public function index(): View
     {
-        //obteniendo modulos con subtemas y niveles de ejericcio
+        //obteniendo modulos con subtemas y niveles de ejericcio y modos de practica
         return view('student.practice.index', [
             'topics' => Topic::with('subtopics')->orderBy('order')->get(),
             'levels' => ExerciseLevel::orderBy('id')->get(),
-
+            'modes' => SessionMode::orderBy('id')->get(),
         ]);
     }
 
@@ -43,9 +44,9 @@ class StudentPracticeController extends Controller
 
     public function start(StartFreePracticeRequest $request): RedirectResponse
     {
-        //iniciando sesion de practica
-        $session = $this->practiceService->startFreePractice(
-            data: $request->validated(), studentId: auth()->id());
+        //iniciando sesion de practica segun el modo
+        $session = $this->practiceService->startPractice(data: $request->validated(), studentId: auth()->id()
+        );
 
         return redirect()->route('student.practice.sessions.show', $session)
             ->with('success', 'Práctica iniciada correctamente.');
