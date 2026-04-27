@@ -17,6 +17,11 @@
     </a>
 </li>
 <li class="nav-item">
+    <a class="nav-link text-white" href="{{ route('weekly-plans.index') }}">
+        Plan semanal
+    </a>
+</li>
+<li class="nav-item">
     <a class="nav-link text-white" href="{{ route('initial-assessments.results') }}">
         Examen diagnóstico
     </a>

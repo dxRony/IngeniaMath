@@ -32,6 +32,6 @@ class WeeklyPlan extends Model
 
     public function planDays(): HasMany
     {
-        return $this->hasMany(PlanDay::class, 'weekly_plan_id', 'id');
+        return $this->hasMany(PlanDay::class, 'weekly_plan_id', 'id')->orderBy('weekday');
     }
 }

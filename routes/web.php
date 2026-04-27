@@ -20,6 +20,7 @@ use App\Http\Controllers\Tutor\TutorDashboardController;
 use App\Http\Controllers\Tutor\TutorExerciseController;
 use App\Http\Controllers\Student\InitialAssessmentController;
 use App\Http\Controllers\Student\LearningPathController;
+use App\Http\Controllers\Student\WeeklyPlanController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -121,30 +122,6 @@ Route::prefix('tutor')->middleware(['auth', 'active', 'role:3'])->group(function
     });
 });
 
-/* // Student
-Route::prefix('student')->middleware(['auth', 'active', 'role:4'])->group(function () {
-    Route::get('/dashboard', [StudentDashboardController::class, 'index'])->name('student.dashboard');
-
-    // Foro
-    Route::resource('/forum', ForumController::class)->only(['index'])->name('index', 'student.forum.index');
-    Route::resource('/threads', ThreadController::class)->only(['create', 'store', 'show'])->names([
-        'create' => 'student.threads.create',
-        'store' => 'student.threads.store',
-        'show' => 'student.threads.show',
-    ]);
-    Route::post('/questions', [QuestionController::class, 'store'])->name('student.questions.store');
-    Route::patch('/question-replies/{reply}/accept', [QuestionReplyController::class, 'acceptReply'])->name('student.question-replies.accept');
-
-    // Examen diagnóstico
-    Route::get('/initial-assessments/results', [InitialAssessmentController::class, 'results'])
-        ->name('initial-assessments.results');
-    Route::get('/initial-assessments/{id}/review/{order}', [InitialAssessmentController::class, 'review'])->name('initial-assessments.review');
-    Route::resource('/initial-assessments', InitialAssessmentController::class);
-
-    // Ruta de aprendizaje
-    Route::get('/learning-paths', [LearningPathController::class, 'index'])
-        ->name('learning-paths.index');
-}); */
 // Student — resto de rutas (CON assessment.completed)
 Route::prefix('student')->middleware(['auth', 'active', 'role:4', 'assessment.completed'])->group(function () {
     Route::get('/dashboard', [StudentDashboardController::class, 'index'])
@@ -175,6 +152,9 @@ Route::prefix('student')->middleware(['auth', 'active', 'role:4', 'assessment.co
     // Ruta de aprendizaje
     Route::get('/learning-paths', [LearningPathController::class, 'index'])
         ->name('learning-paths.index');
+
+    // Plan semanal
+    Route::resource('/weekly-plans', WeeklyPlanController::class);
 });
 
 // Student — rutas del diagnóstico (SIN assessment.completed)
