@@ -16,6 +16,7 @@ use App\Http\Controllers\Moderator\Resources\ResourceReviewController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Register\RegisterController;
 use App\Http\Controllers\Student\MockExams\MockExamController;
+use App\Http\Controllers\Student\MockExams\MockExamHistoryController;
 use App\Http\Controllers\Student\StudentDashboardController;
 use App\Http\Controllers\Student\StudentPracticeController;
 use App\Http\Controllers\Tutor\Resources\ResourceController;
@@ -182,6 +183,8 @@ Route::prefix('student')->middleware(['auth', 'active', 'role:4', 'assessment.co
     Route::prefix('mock-exams')->name('student.mock-exams.')->group(function () {
         Route::get('/',                     [MockExamController::class, 'startForm'])->name('start-form');
         Route::post('/start',               [MockExamController::class, 'start'])->name('start');
+
+        Route::get('/history',              [MockExamHistoryController::class, 'index'])->name('history');
 
         Route::get('/{id}/take/{order}',    [MockExamController::class, 'take'])->name('take')->whereNumber('id')->whereNumber('order');
         Route::post('/{id}/answer/{order}', [MockExamController::class, 'answer'])->name('answer')->whereNumber('id')->whereNumber('order');
