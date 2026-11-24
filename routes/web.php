@@ -1,7 +1,212 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\ExamConfigController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\Auth\ResetPasswordController;
+use App\Http\Controllers\Forum\ForumController;
+use App\Http\Controllers\Forum\QuestionController;
+use App\Http\Controllers\Forum\QuestionReplyController;
+use App\Http\Controllers\Forum\ThreadController;
+use App\Http\Controllers\Login\LoginController;
+use App\Http\Controllers\Moderator\ModeratorDashboardController;
+use App\Http\Controllers\Moderator\ModeratorExerciseReviewController;
+use App\Http\Controllers\Moderator\Resources\ResourceReviewController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Register\RegisterController;
+use App\Http\Controllers\Student\MockExams\MockExamController;
+use App\Http\Controllers\Student\MockExams\MockExamHistoryController;
+use App\Http\Controllers\Student\Resources\StudentResourceController;
+use App\Http\Controllers\Student\StudentDashboardController;
+use App\Http\Controllers\Student\StudentPracticeController;
+use App\Http\Controllers\Tutor\Resources\ResourceController;
+use App\Http\Controllers\Tutor\TutorDashboardController;
+use App\Http\Controllers\Tutor\TutorExerciseController;
+use App\Http\Controllers\Student\InitialAssessmentController;
+use App\Http\Controllers\Student\LearningPathController;
+use App\Http\Controllers\Student\WeeklyPlanController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
+})->name('home');
+
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [LoginController::class, 'index'])->name('login');
+    Route::post('/login', [LoginController::class, 'login'])->name('login.store');
+    Route::get('/register', [RegisterController::class, 'index'])->name('register.index');
+    Route::post('/register', [RegisterController::class, 'store'])->name('register.store');
+
+    Route::get('/forgot-password', [ForgotPasswordController::class, 'create'])
+        ->name('password.request');
+    Route::post('/forgot-password', [ForgotPasswordController::class, 'store'])
+        ->name('password.email');
+
+    Route::get('/reset-password/{token}', [ResetPasswordController::class, 'create'])
+        ->name('password.reset');
+    Route::post('/reset-password', [ResetPasswordController::class, 'store'])
+        ->name('password.update');
+});
+
+Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->name('logout');
+Route::view('/account-disabled', 'shared.account-disabled')->middleware('auth')->name('account.disabled');
+
+Route::middleware(['auth', 'active'])->group(function () {
+    Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::get('/profiles/{user}', [ProfileController::class, 'showPublic'])->name('profile.public.show');
+});
+
+// Admin
+Route::prefix('admin')->middleware(['auth', 'active', 'role:1'])->group(function () {
+    Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
+    Route::patch('/users/{user}/toggle-state', [UserController::class, 'toggleState'])->name('users.toggle-state');
+    Route::resource('/users', UserController::class);
+
+    // Configuracion de simulacros
+    Route::prefix('exam-configs')->name('admin.exam-configs.')->group(function () {
+        Route::get('/',                   [ExamConfigController::class, 'index'])->name('index');
+        Route::get('/create',             [ExamConfigController::class, 'create'])->name('create');
+        Route::post('/',                  [ExamConfigController::class, 'store'])->name('store');
+        Route::get('/{id}/edit',          [ExamConfigController::class, 'edit'])->name('edit')->whereNumber('id');
+        Route::put('/{id}',               [ExamConfigController::class, 'update'])->name('update')->whereNumber('id');
+        Route::patch('/{id}/activate',    [ExamConfigController::class, 'activate'])->name('activate')->whereNumber('id');
+        Route::patch('/{id}/deactivate',  [ExamConfigController::class, 'deactivate'])->name('deactivate')->whereNumber('id');
+    });
+
+
+});
+
+// Moderator
+Route::prefix('moderator')->middleware(['auth', 'active', 'role:2'])->group(function () {
+    Route::get('/dashboard', [ModeratorDashboardController::class, 'index'])->name('moderator.dashboard');
+
+    // Foro
+    Route::resource('/forum', ForumController::class)->only(['index'])->name('index', 'moderator.forum.index');
+    Route::resource('/threads', ThreadController::class)->only(['show'])->name('show', 'moderator.threads.show');
+    Route::delete('/questions/{question}', [QuestionController::class, 'destroy'])->name('moderator.questions.destroy');
+    Route::delete('/question-replies/{reply}', [QuestionReplyController::class, 'destroy'])->name('moderator.question-replies.destroy');
+    Route::patch('/threads/{thread}/close', [ThreadController::class, 'closeThread'])->name('moderator.threads.close');
+
+    // Revisión de ejercicios
+    Route::get('/exercises/review', [ModeratorExerciseReviewController::class, 'index'])->name('moderator.exercises.review.index');
+    Route::get('/exercises/review/{exercise}', [ModeratorExerciseReviewController::class, 'show'])->name('moderator.exercises.review.show');
+    Route::post('/exercises/review/{exercise}', [ModeratorExerciseReviewController::class, 'review'])->name('moderator.exercises.review.store');
+    Route::get('/duplicate-alerts/{duplicateAlert}', [ModeratorExerciseReviewController::class, 'showDuplicate'])->name('moderator.duplicate-alerts.show');
+    Route::patch('/duplicate-alerts/{duplicateAlert}/resolve', [ModeratorExerciseReviewController::class, 'resolve'])->name('moderator.duplicate-alerts.resolve');
+    Route::patch('/duplicate-alerts/{duplicateAlert}/reject-new-exercise', [ModeratorExerciseReviewController::class, 'rejectNewExercise'])->name('moderator.duplicate-alerts.reject-new-exercise');
+
+    // Revisión de recursos educativos
+    Route::prefix('resources')->name('moderator.resources.')->group(function () {
+        Route::get('/', [ResourceReviewController::class, 'index'])->name('index');
+        Route::get('/{id}', [ResourceReviewController::class, 'show'])->name('show')->whereNumber('id');
+        Route::post('/{id}/approve', [ResourceReviewController::class, 'approve'])->name('approve')->whereNumber('id');
+        Route::post('/{id}/reject', [ResourceReviewController::class, 'reject'])->name('reject')->whereNumber('id');
+    });
+});
+
+// Tutor
+Route::prefix('tutor')->middleware(['auth', 'active', 'role:3'])->group(function () {
+    Route::get('/dashboard', [TutorDashboardController::class, 'index'])->name('tutor.dashboard');
+
+    // Foro
+    Route::resource('/forum', ForumController::class)->only(['index'])->name('index', 'tutor.forum.index');
+    Route::resource('/threads', ThreadController::class)->only(['show'])->name('show', 'tutor.threads.show');
+    Route::post('/question-replies', [QuestionReplyController::class, 'store'])->name('tutor.question-replies.store');
+
+    // Ejercicios
+    Route::get('/exercises', [TutorExerciseController::class, 'index'])->name('tutor.exercises.index');
+    Route::get('/exercises/create', [TutorExerciseController::class, 'create'])->name('tutor.exercises.create');
+    Route::post('/exercises', [TutorExerciseController::class, 'store'])->name('tutor.exercises.store');
+    Route::patch('/exercises/{exercise}/submit-review', [TutorExerciseController::class, 'submitReview'])->name('tutor.exercises.submitReview');
+    Route::get('/exercises/{exercise}/edit', [TutorExerciseController::class, 'edit'])->name('tutor.exercises.edit');
+    Route::put('/exercises/{exercise}', [TutorExerciseController::class, 'update'])->name('tutor.exercises.update');
+    Route::get('/exercises/{exercise}', [TutorExerciseController::class, 'show'])->name('tutor.exercises.show');
+    Route::get('/exercises/{exercise}/reviews', [TutorExerciseController::class, 'reviews'])->name('tutor.exercises.reviews');
+
+    // Recursos educativos
+    Route::prefix('resources')->name('tutor.resources.')->group(function () {
+        Route::get('/', [ResourceController::class, 'index'])->name('index');
+        Route::get('/create', [ResourceController::class, 'create'])->name('create');
+        Route::post('/', [ResourceController::class, 'store'])->name('store');
+
+        // Edición
+        Route::get('/{id}/edit', [ResourceController::class, 'edit'])->name('edit')->whereNumber('id');
+        Route::put('/{id}', [ResourceController::class, 'update'])->name('update')->whereNumber('id');
+
+        // Eliminación (cambia a status 4)
+        Route::delete('/{id}', [ResourceController::class, 'destroy'])->name('destroy')->whereNumber('id');
+    });
+});
+
+// Student — resto de rutas (CON assessment.completed)
+Route::prefix('student')->middleware(['auth', 'active', 'role:4', 'assessment.completed'])->group(function () {
+    Route::get('/dashboard', [StudentDashboardController::class, 'index'])
+        ->name('student.dashboard');
+
+    // Foro
+    Route::resource('/forum', ForumController::class)
+        ->only(['index'])
+        ->name('index', 'student.forum.index');
+    Route::resource('/threads', ThreadController::class)
+        ->only(['create', 'store', 'show'])
+        ->names([
+            'create' => 'student.threads.create',
+            'store'  => 'student.threads.store',
+            'show'   => 'student.threads.show',
+        ]);
+    Route::post('/questions', [QuestionController::class, 'store'])
+        ->name('student.questions.store');
+    Route::patch('/question-replies/{reply}/accept', [QuestionReplyController::class, 'acceptReply'])
+        ->name('student.question-replies.accept');
+
+    //Practica
+    Route::get('/', [StudentPracticeController::class, 'index'])->name('student.practice.index');
+    Route::post('/start', [StudentPracticeController::class, 'start'])->name('student.practice.start');
+    Route::get('/sessions', [StudentPracticeController::class, 'showSessions'])->name('student.practice.sessions');
+    Route::get('/sessions/{session}', [StudentPracticeController::class, 'showSession'])->name('student.practice.sessions.show');
+    Route::get('/sessions/{session}/exercises/{sessionExercise}', [StudentPracticeController::class, 'showExercise'])->name('student.practice.exercises.show');
+    Route::post('/sessions/{session}/exercises/{sessionExercise}/answer', [StudentPracticeController::class, 'answer'])->name('student.practice.exercises.answer');
+    Route::post('/sessions/{session}/exercises/{sessionExercise}/save', [StudentPracticeController::class, 'saveExercise'])->name('student.practice.exercises.save');
+
+    // Examen diagnóstico
+    Route::get('/initial-assessments/results', [InitialAssessmentController::class, 'results'])
+        ->name('initial-assessments.results');
+
+    Route::get('/initial-assessments/{id}/review/{order}', [InitialAssessmentController::class, 'review'])->name('initial-assessments.review');
+
+    // Ruta de aprendizaje
+    Route::get('/learning-paths', [LearningPathController::class, 'index'])
+        ->name('learning-paths.index');
+
+// Simulacros de examen
+    Route::prefix('mock-exams')->name('student.mock-exams.')->group(function () {
+        Route::get('/',                     [MockExamController::class, 'startForm'])->name('start-form');
+        Route::post('/start',               [MockExamController::class, 'start'])->name('start');
+
+        Route::get('/history',              [MockExamHistoryController::class, 'index'])->name('history');
+
+        Route::get('/{id}/take/{order}',    [MockExamController::class, 'take'])->name('take')->whereNumber('id')->whereNumber('order');
+        Route::post('/{id}/answer/{order}', [MockExamController::class, 'answer'])->name('answer')->whereNumber('id')->whereNumber('order');
+        Route::get('/{id}/finish',          [MockExamController::class, 'finish'])->name('finish')->whereNumber('id');
+        Route::get('/{id}/results',         [MockExamController::class, 'results'])->name('results')->whereNumber('id');
+    });
+
+
+    // Plan semanal
+    Route::resource('/weekly-plans', WeeklyPlanController::class);
+
+});
+
+// Student — rutas del diagnóstico (SIN assessment.completed)
+Route::prefix('student')->middleware(['auth', 'active', 'role:4'])->group(function () {
+    Route::resource('/initial-assessments', InitialAssessmentController::class);
+
+    // Recursos educativos
+    Route::prefix('resources')->name('student.resources.')->group(function () {
+        Route::get('/',     [StudentResourceController::class, 'index'])->name('index');
+        Route::get('/{id}', [StudentResourceController::class, 'show'])->name('show')->whereNumber('id');
+    });
+
 });
